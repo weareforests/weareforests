@@ -43,19 +43,23 @@ class Application (application.Application):
         f = fastagi.FastAGIFactory(self.connected)
         reactor.listenTCP( 4573, f, 50, '127.0.0.1')
 
-        
+        self.sessions = set()
+
+
     def connected(self, agi):
-        print "current recordings:", list(self.store.query(Recording))
-        CallerSession(self, agi)
+        self.sessions.add(CallerSession(self, agi))
 
 
     def getIdleRecordings(self):
-        r = list(self.store.query(Recording, Recording.filename == "audio/idle"))
+        r = list(self.store.query(Recording, Recording.filename == u'audio/idle'))
         if r:
             return r
         rec = Recording(store=self.store, filename=u'audio/idle')
         return [rec]
-            
+
+    def sessionEnded(self, session):
+        print 'session ended', session
+        self.sessions.remove(session)
 
 
 
@@ -68,7 +72,10 @@ class CallerSession (object):
         self.listened = []
         self.callerId = unicode(self.agi.variables['agi_callerid'])
         self.state = application.StateMachine(self, verbose=1)
-        self.state.set("play")
+
+        d = self.agi.answer()
+        d.addCallback(lambda _: self.state.set("play"))
+        d.addErrback(self.catchHangup)
 
 
     def enter_play(self, recording=None, offset=0):
@@ -92,6 +99,7 @@ class CallerSession (object):
             else:
                 self.state.set("play")
         d.addCallback(audioDone)
+        d.addErrback(self.catchHangup)
         
 
     def lookupNextRecording(self):
@@ -118,3 +126,9 @@ class CallerSession (object):
             # resume play where we stopped
             self.state.set("play", currentlyPlaying, offset)
         d.addCallback(save)
+        d.addErrback(self.catchHangup)
+
+
+    def catchHangup(self, f):
+        print "***", f
+        self.app.sessionEnded(self)
