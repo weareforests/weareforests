@@ -72,9 +72,22 @@ class CallerSession (object):
         self.listened = []
         self.callerId = unicode(self.agi.variables['agi_callerid'])
         self.state = application.StateMachine(self, verbose=1)
+        self.state.set("intro")
 
-        d = self.agi.answer()
-        d.addCallback(lambda _: self.state.set("play"))
+
+    def enter_intro(self):
+        """
+        Play the intro
+        """
+        print "Playing intro"
+        d = self.agi.streamFile("audio/intro", chr(self.digit), 0)
+        def audioDone(r):
+            digit, offset = r
+            if digit == self.digit:
+                self.state.set("recording")
+            else:
+                self.state.set("play")
+        d.addCallback(audioDone)
         d.addErrback(self.catchHangup)
 
 
