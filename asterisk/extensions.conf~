@@ -1,0 +1,26 @@
+[default]
+exten => 5010,1,Dial(SIP/5010)
+
+exten => 5020,1,Dial(SIP/5020)
+
+exten => 500,1,Playback(demo-abouttotry); Let them know what's going on                              
+exten => 500,n,Dial(IAX2/guest@pbx.digium.com/s@default)        ; Call the Asterisk demo
+exten => 500,n,Playback(demo-nogo)      ; Couldn't connect to the demo site                          
+exten => 500,n,Goto(s,6)                ; Return to the start over message.
+
+exten => 501,1,Playback(custom/arjan); Let them know what's going on                              
+
+
+exten => 502,1,AGI(agi://127.0.0.1:4573)
+
+exten => 503,1,Answer
+exten => 503,n,Ringing
+exten => 503,n,Wait(3)
+exten => 503,n,Set(MEETME_AGI_BACKGROUND=agi://127.0.0.1:4573)
+#exten => 503,n,MeetMe(1234,1)
+exten => 503,n,MeetMe(1234,b1)
+
+
+
+[from-budgetphone]
+exten => _X.,1,Goto(default,503,1);
