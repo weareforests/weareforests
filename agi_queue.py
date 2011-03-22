@@ -51,10 +51,10 @@ class Application (application.Application):
 
 
     def getIdleRecordings(self):
-        r = list(self.store.query(Recording, Recording.filename == u'audio/idle'))
+        r = list(self.store.query(Recording, Recording.filename == u'audio/silent'))
         if r:
             return r
-        rec = Recording(store=self.store, filename=u'audio/idle')
+        rec = Recording(store=self.store, filename=u'audio/silent')
         return [rec]
 
     def sessionEnded(self, session):
