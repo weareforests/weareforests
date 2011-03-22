@@ -117,7 +117,7 @@ class CallerSession (object):
 
     def lookupNextRecording(self):
         timePoint = Time() - timedelta(minutes=15)
-        for r in self.app.store.query(Recording, Recording.created >= timePoint, sort=Recording.created.ascending):
+        for r in self.app.store.query(Recording, Recording.created >= timePoint, sort=Recording.created.descending):
             if r.storeID in self.listened:
                 continue
             return r
