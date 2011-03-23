@@ -57,9 +57,26 @@ class Application (application.Application):
         rec = Recording(store=self.store, filename=u'audio/silent')
         return [rec]
 
+
     def sessionEnded(self, session):
         print 'session ended', session
         self.sessions.remove(session)
+
+
+    def recordingAdded(self, r):
+        for session in self.sessions:
+            session.queueAdd(r.filename)
+
+    def isAdmin(self, callerId):
+        print "Admin request:", callerId
+        if callerId == "5010":
+            return True
+        return False
+
+
+    def queueAll(self, filename):
+        for session in self.sessions:
+            session.queueAddFirst(filename)
 
 
 
@@ -69,26 +86,23 @@ class CallerSession (object):
     def __init__(self, app, agi):
         self.app = app
         self.agi = agi
-        self.listened = []
+        self.queue = []
         self.callerId = unicode(self.agi.variables['agi_callerid'])
         self.state = application.StateMachine(self, verbose=1)
-        self.state.set("intro")
+        self.state.set("start")
 
 
-    def enter_intro(self):
-        """
-        Play the intro
-        """
-        print "Playing intro"
-        d = self.agi.streamFile("audio/intro", chr(self.digit), 0)
-        def audioDone(r):
-            digit, offset = r
-            if digit == self.digit:
-                self.state.set("recording")
-            else:
-                self.state.set("play")
-        d.addCallback(audioDone)
-        d.addErrback(self.catchHangup)
+    def queueAdd(self, r):
+        self.queue.append(r)
+
+    def queueAddFirst(self, r):
+        self.queue.insert(0, r)
+
+
+    def enter_start(self):
+        timePoint = Time() - timedelta(minutes=15)
+        self.queue = ["audio/intro"] + [r.filename for r in self.app.store.query(Recording, Recording.created >= timePoint, sort=Recording.created.descending)]
+        self.state.set("play")
 
 
     def enter_play(self, recording=None, offset=0):
@@ -98,30 +112,32 @@ class CallerSession (object):
         """
         # look up the next recording
         if not recording:
-            current = self.lookupNextRecording()
+            if not self.queue:
+                current = "audio/silent"
+            else:
+                current = self.queue[0]
+                del self.queue[0]
+
         else:
             current = recording
 
-        print "Playing recording: %s from %s, offset %d" % (current.filename, current.created, offset)
-        d = self.agi.streamFile(str(current.filename), chr(self.digit), offset)
+        print "Playing recording: %s, offset %d" % (current, offset)
+        d = self.agi.streamFile(str(current), chr(self.digit)+"#", offset)
         def audioDone(r):
-            self.listened.append(current.storeID)
             digit, offset = r
             if digit == self.digit:
                 self.state.set("recording", current, offset)
+            elif digit == ord("#"):
+                print "wow"
+                if self.app.isAdmin(self.callerId):
+                    self.state.set("admin")
+                else:
+                    # just play the same
+                    self.state.set("play", current)
             else:
                 self.state.set("play")
         d.addCallback(audioDone)
         d.addErrback(self.catchHangup)
-        
-
-    def lookupNextRecording(self):
-        timePoint = Time() - timedelta(minutes=15)
-        for r in self.app.store.query(Recording, Recording.created >= timePoint, sort=Recording.created.descending):
-            if r.storeID in self.listened:
-                continue
-            return r
-        return random.choice(self.app.getIdleRecordings())
 
 
     def enter_recording(self, currentlyPlaying=None, offset=0):
@@ -136,10 +152,30 @@ class CallerSession (object):
             digit, type, duration = r
             rec = Recording(store=self.app.store, filename=unicode(filename), created=start, caller_id=self.callerId, duration=duration)
             print "saved!"
+            # add it to everybody's queue
+            self.app.recordingAdded(rec)
             # resume play where we stopped
             self.state.set("play", currentlyPlaying, offset)
         d.addCallback(save)
         d.addErrback(self.catchHangup)
+
+
+
+    def enter_admin(self):
+        d = self.agi.getOption("audio/silent", "0123456789#")
+
+        def handle(r):
+            digit, endpos = r
+            print digit
+            if digit == "#":
+                self.state.set("play")
+                return
+            filename = "audio/%s" % digit
+            print "queueing to all: %s" % filename
+            self.app.queueAll(filename)
+            self.state.set("admin")
+        d.addCallback(handle)
+
 
 
     def catchHangup(self, f):
