@@ -70,7 +70,7 @@ class Application (application.Application):
 
     def isAdmin(self, callerId):
         print "Admin request:", callerId
-        WHITELIST=["5020", "0653638994", "0641322599", "0653639052"]
+        WHITELIST=["5010", "0653638994", "0641322599", "0653639052"]
         print WHITELIST, callerId, type(callerId)
         print str(callerId) in WHITELIST
         if str(callerId) in WHITELIST:
@@ -178,7 +178,8 @@ class CallerSession (object):
             filename = "audio/%s" % digit
             print "queueing to all: %s" % filename
             self.app.queueAll(filename)
-            self.state.set("admin")
+            d = self.agi.sayDigits(digit)
+            d.addCallback(lambda _: self.state.set("admin"))
         d.addCallback(handle)
 
 
