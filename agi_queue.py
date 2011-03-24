@@ -14,6 +14,9 @@ from axiom.store import Store
 from axiom.attributes import text, timestamp, integer
 
 
+WHITELIST=["5010", "0653638994", "0641322599", "0653639052"]
+
+
 
 class Recording (Item):
     """
@@ -70,9 +73,6 @@ class Application (application.Application):
 
     def isAdmin(self, callerId):
         print "Admin request:", callerId
-        WHITELIST=["5010", "0653638994", "0641322599", "0653639052"]
-        print WHITELIST, callerId, type(callerId)
-        print str(callerId) in WHITELIST
         if str(callerId) in WHITELIST:
             return True
         return False
@@ -131,11 +131,11 @@ class CallerSession (object):
         def audioDone(r):
             digit, offset = r
             if digit == self.digit:
-                self.state.set("recording", current, offset)
+                self.setStateAfterSample("recording", "audio/record", current, offset)
             elif digit == ord("0"):
                 print "wow"
                 if self.app.isAdmin(self.callerId):
-                    self.state.set("admin")
+                    self.state.set("admin_start")
                 else:
                     # just play the same
                     self.state.set("play", current)
@@ -160,10 +160,28 @@ class CallerSession (object):
             # add it to everybody's queue
             self.app.recordingAdded(rec)
             # resume play where we stopped
-            self.state.set("play", currentlyPlaying, offset)
+            self.setStateAfterSample("play", "audio/listen", currentlyPlaying, offset)
+            #self.state.set("play", currentlyPlaying, offset)
+            #self.state.set("play", currentlyPlaying, offset)
         d.addCallback(save)
         d.addErrback(self.catchHangup)
 
+
+
+    def setStateAfterSample(self, state, sample, *args):
+        d = self.agi.streamFile(str(sample), "", 0)
+        def audioDone(r):
+            print "audio done"
+            self.state.set(state, *args)
+        d.addCallback(audioDone)
+
+
+
+    def enter_admin_start(self):
+        d = self.agi.sayDigits("0")
+        def handle(r):
+            self.state.set("admin")
+        d.addCallback(handle)
 
 
     def enter_admin(self):
@@ -173,7 +191,7 @@ class CallerSession (object):
             digit, endpos = r
             print digit
             if digit == "0":
-                self.state.set("play")
+                self.setStateAfterSample("play", "audio/listen")
                 return
             filename = "audio/%s" % digit
             print "queueing to all: %s" % filename
@@ -181,6 +199,7 @@ class CallerSession (object):
             d = self.agi.sayDigits(digit)
             d.addCallback(lambda _: self.state.set("admin"))
         d.addCallback(handle)
+        d.addErrback(self.catchHangup)
 
 
 
