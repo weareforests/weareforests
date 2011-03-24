@@ -151,7 +151,7 @@ class CallerSession (object):
         """
         start = Time()
         filename = "audio/%s" % hashlib.sha1(str(time.time())).hexdigest()
-        d = self.agi.recordFile(filename, "gsm", chr(self.digit))
+        d = self.agi.recordFile(filename, "gsm", chr(self.digit), 45)
 
         def save(r):
             digit, type, duration = r
