@@ -14,6 +14,8 @@ from axiom.store import Store
 from axiom.attributes import text, timestamp, integer
 
 
+WHITELIST=["5020"]
+
 class Recording (Item):
     """
     A certain recording.
@@ -69,7 +71,7 @@ class Application (application.Application):
 
     def isAdmin(self, callerId):
         print "Admin request:", callerId
-        if callerId == "5010":
+        if callerId in WHITELIST:
             return True
         return False
 
@@ -88,6 +90,7 @@ class CallerSession (object):
         self.agi = agi
         self.queue = []
         self.callerId = unicode(self.agi.variables['agi_callerid'])
+        print "New session from", self.callerId
         self.state = application.StateMachine(self, verbose=1)
         self.state.set("start")
 
@@ -122,12 +125,12 @@ class CallerSession (object):
             current = recording
 
         print "Playing recording: %s, offset %d" % (current, offset)
-        d = self.agi.streamFile(str(current), chr(self.digit)+"#", offset)
+        d = self.agi.streamFile(str(current), chr(self.digit)+"0", offset)
         def audioDone(r):
             digit, offset = r
             if digit == self.digit:
                 self.state.set("recording", current, offset)
-            elif digit == ord("#"):
+            elif digit == ord("0"):
                 print "wow"
                 if self.app.isAdmin(self.callerId):
                     self.state.set("admin")
@@ -167,7 +170,7 @@ class CallerSession (object):
         def handle(r):
             digit, endpos = r
             print digit
-            if digit == "#":
+            if digit == "0":
                 self.state.set("play")
                 return
             filename = "audio/%s" % digit
