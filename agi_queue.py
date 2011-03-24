@@ -104,7 +104,7 @@ class CallerSession (object):
 
     def enter_start(self):
         timePoint = Time() - timedelta(minutes=15)
-        self.queue = ["audio/intro"] + [r.filename for r in self.app.store.query(Recording, Recording.created >= timePoint, sort=Recording.created.descending)]
+        self.queue = ["audio/intro"] + [r.filename for r in self.app.store.query(Recording, Recording.created >= timePoint, sort=Recording.created.ascending)]
         self.state.set("play")
 
 
