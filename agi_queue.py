@@ -14,7 +14,7 @@ from axiom.store import Store
 from axiom.attributes import text, timestamp, integer
 
 
-WHITELIST=["5020"]
+WHITELIST=["5020", "0653638994", "0641322599", "0653639052"]
 
 class Recording (Item):
     """
