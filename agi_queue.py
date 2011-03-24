@@ -14,7 +14,6 @@ from axiom.store import Store
 from axiom.attributes import text, timestamp, integer
 
 
-WHITELIST=["5020", "0653638994", "0641322599", "0653639052"]
 
 class Recording (Item):
     """
@@ -71,7 +70,10 @@ class Application (application.Application):
 
     def isAdmin(self, callerId):
         print "Admin request:", callerId
-        if callerId in WHITELIST:
+        WHITELIST=["5020", "0653638994", "0641322599", "0653639052"]
+        print WHITELIST, callerId, type(callerId)
+        print str(callerId) in WHITELIST
+        if str(callerId) in WHITELIST:
             return True
         return False
 
