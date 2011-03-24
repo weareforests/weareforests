@@ -133,10 +133,10 @@ class CallerSession (object):
             if digit == self.digit:
                 self.setStateAfterSample("recording", "audio/record", current, offset)
             elif digit == ord("0"):
-                print "wow"
                 if self.app.isAdmin(self.callerId):
                     self.state.set("admin_start")
                 else:
+                    print "not authorized to enter admin mode from " + self.callerId
                     # just play the same
                     self.state.set("play", current)
             else:
