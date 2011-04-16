@@ -90,8 +90,10 @@ class Application (application.Application, web.WebMixIn):
 
     def recordingAdded(self, r):
         for session in self.sessions.values():
+            if session.isLivePhone:
+                continue
             session.queueAdd(r.filename)
-            if session.state.get == 'conference' and not session.isLivePhone:
+            if session.state.get == 'conference':
                 self.transferToAGI(session, 'to_play')
 
 
@@ -104,8 +106,10 @@ class Application (application.Application, web.WebMixIn):
 
     def queueAll(self, filename):
         for session in self.sessions.values():
+            if session.isLivePhone:
+                continue
             session.queueAddFirst(filename)
-            if session.state.get == 'conference' and not session.isLivePhone:
+            if session.state.get == 'conference':
                 self.transferToAGI(session, 'to_play')
 
 
