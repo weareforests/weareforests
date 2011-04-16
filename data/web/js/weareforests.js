@@ -17,7 +17,7 @@
     // The dispatcher
     IO.recv(function (msg)
     {
-        console.log(msg);
+        //console.log(msg);
 
         switch (msg.event)
         {

@@ -39,6 +39,9 @@ class WebMixIn:
 
 
     def handleMessage(self, msg, c):
+        if 'cmd' in msg:
+            if msg['cmd'] == 'queue':
+                self.queueAll(msg['filename'])
         print c, 'says:', msg
 
 

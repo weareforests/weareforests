@@ -6,14 +6,18 @@
     </head>
     <body>
 
+        <button onclick="IO.send({cmd: 'queue', filename: 'digits/1'})">Queue 1</button>
+        <button onclick="IO.send({cmd: 'queue', filename: 'digits/2'})">Queue 2</button>
+        <button onclick="IO.send({cmd: 'queue', filename: 'digits/3'})">Queue 3</button>
+
         <h2>Current sessions</h2>
         <div id="sessions">
             <table border="1" width="600">
                 <thead>
                     <tr>
-                        <th>Caller id</th>
-                        <th>Connected since</th>
-                        <th>State</th>
+                        <th width="30%">Caller id</th>
+                        <th width="30%">Connected since</th>
+                        <th width="40%">State</th>
                     </tr>
                 </thead>
                 <tbody>

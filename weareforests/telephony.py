@@ -38,19 +38,45 @@ class Recording (Item):
 class CallerSession (object):
     digit = ord("1")
 
+    app = None
+    agi = None
+    queue = None
+
+    # info
+    channel = None
+    callerId = None
+    timeStarted = None
+
+    # state machine
+    state = None
+
+
     def __init__(self, app, agi):
         self.app = app
         self.agi = agi
         self.queue = []
+        print self.agi.variables
         self.callerId = unicode(self.agi.variables['agi_callerid'])
+        self.channel = self.agi.variables['agi_channel']
         self.timeStarted = time.time()
         print "New session from", self.callerId
         self.state = application.StateMachine(self, verbose=1)
         self.state.set("start")
 
 
+    def reEntry(self, agi):
+        self.agi = agi
+        if self.state.get == 'to_recording':
+            self.setStateAfterSample("recording", "weareforests-audio/record")
+        if self.state.get == 'to_play':
+            self.state.set('play')
+        if self.state.get == 'to_admin':
+            self.setStateAfterSample("admin", "digits/0")
+
+
     def queueAdd(self, r):
         self.queue.append(r)
+
 
     def queueAddFirst(self, r):
         self.queue.insert(0, r)
@@ -58,7 +84,8 @@ class CallerSession (object):
 
     def enter_start(self):
         timePoint = Time() - timedelta(minutes=15)
-        self.queue = ["weareforests-audio/intro"] + [r.filename for r in self.app.store.query(Recording, Recording.created >= timePoint, sort=Recording.created.ascending)]
+        self.queue = ["weareforests-audio/silent"] # + [r.filename for r in self.app.store.query(Recording, Recording.created >= timePoint, sort=Recording.created.ascending)]
+        #self.queue = ["weareforests-audio/intro"] + [r.filename for r in self.app.store.query(Recording, Recording.created >= timePoint, sort=Recording.created.ascending)]
         self.state.set("play")
 
 
@@ -72,7 +99,8 @@ class CallerSession (object):
         # look up the next recording
         if not recording:
             if not self.queue:
-                current = "weareforests-audio/silent"
+                # if no recording, transfer to conference
+                self.app.transferToConference(self)
             else:
                 current = self.queue[0]
                 del self.queue[0]
@@ -87,8 +115,8 @@ class CallerSession (object):
             if digit == self.digit:
                 self.setStateAfterSample("recording", "weareforests-audio/record", current, offset)
             elif digit == ord("0"):
-                if self.app.isAdmin(self.callerId):
-                    self.state.set("admin_start")
+                if self.app.isAdmin(self):
+                    self.setStateAfterSample("admin", "digits/0")
                 else:
                     print "not authorized to enter admin mode from " + self.callerId
                     # just play the same
@@ -123,21 +151,12 @@ class CallerSession (object):
         d.addErrback(self.catchHangup)
 
 
-
     def setStateAfterSample(self, state, sample, *args):
         d = self.agi.streamFile(str(sample), "", 0)
         def audioDone(r):
             print "audio done"
             self.state.set(state, *args)
         d.addCallback(audioDone)
-
-
-
-    def enter_admin_start(self):
-        d = self.agi.sayDigits("0")
-        def handle(r):
-            self.state.set("admin")
-        d.addCallback(handle)
 
 
     def enter_admin(self):
@@ -160,5 +179,8 @@ class CallerSession (object):
 
 
     def catchHangup(self, f):
+        if self.state.get == 'to_conference':
+            return
+
         print "***", f
-        self.app.sessionEnded(self)
+        self.app.sessionEnded(self.channel)
