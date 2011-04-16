@@ -91,7 +91,7 @@ class Application (application.Application, web.WebMixIn):
     def recordingAdded(self, r):
         for session in self.sessions.values():
             session.queueAdd(r.filename)
-            if session.state.get == 'conference':
+            if session.state.get == 'conference' and not session.isLivePhone:
                 self.transferToAGI(session, 'to_play')
 
 
@@ -105,7 +105,7 @@ class Application (application.Application, web.WebMixIn):
     def queueAll(self, filename):
         for session in self.sessions.values():
             session.queueAddFirst(filename)
-            if session.state.get == 'conference':
+            if session.state.get == 'conference' and not session.isLivePhone:
                 self.transferToAGI(session, 'to_play')
 
 
@@ -124,6 +124,7 @@ class Application (application.Application, web.WebMixIn):
                       'state': session.state.get,
                       'timeStarted': session.timeStarted,
                       'channel': session.channel,
+                      'isLive': session.isLivePhone,
                       'queue': session.queue})
         return s
 
@@ -142,11 +143,17 @@ class Application (application.Application, web.WebMixIn):
 
 
     def conferenceJoin(self, admin, e):
+        print e
         channel = e['channel']
         if channel not in self.sessions:
             print "???", e
             return
-        self.sessions[channel].state.set("conference")
+        session = self.sessions[channel]
+        session.state.set("conference")
+        session.conferenceUserId = e['member']
+
+        self.admin.sendMessage({'action': 'ConferenceMute', 'Conference': 'weareforests', 'User': e['member']})
+
         self.pingWebSessions()
 
 

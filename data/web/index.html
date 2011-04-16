@@ -6,18 +6,15 @@
     </head>
     <body>
 
-        <button onclick="IO.send({cmd: 'queue', filename: 'digits/1'})">Queue 1</button>
-        <button onclick="IO.send({cmd: 'queue', filename: 'digits/2'})">Queue 2</button>
-        <button onclick="IO.send({cmd: 'queue', filename: 'digits/3'})">Queue 3</button>
-
         <h2>Current sessions</h2>
         <div id="sessions">
-            <table border="1" width="600">
+            <table border="1" width="800">
                 <thead>
                     <tr>
                         <th width="30%">Caller id</th>
                         <th width="30%">Connected since</th>
-                        <th width="40%">State</th>
+                        <th width="20%">State</th>
+                        <th width="20%">Options</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -26,6 +23,22 @@
             </table>
         </div>
 
+        <h2>Queueing files</h2>
+        <div>
+            <button onclick="IO.send({cmd: 'queue', filename: 'weareforests-audio/1'})">Sample 1</button>
+            <button onclick="IO.send({cmd: 'queue', filename: 'weareforests-audio/2'})">Sample 2</button>
+            <button onclick="IO.send({cmd: 'queue', filename: 'weareforests-audio/3'})">Sample 3</button>
+        </div>
+        <div>
+            <button onclick="IO.send({cmd: 'queue', filename: 'weareforests-audio/4'})">Sample 4</button>
+            <button onclick="IO.send({cmd: 'queue', filename: 'weareforests-audio/5'})">Sample 5</button>
+            <button onclick="IO.send({cmd: 'queue', filename: 'weareforests-audio/6'})">Sample 6</button>
+        </div>
+        <div>
+            <button onclick="IO.send({cmd: 'queue', filename: 'weareforests-audio/7'})">Sample 7</button>
+            <button onclick="IO.send({cmd: 'queue', filename: 'weareforests-audio/8'})">Sample 8</button>
+            <button onclick="IO.send({cmd: 'queue', filename: 'weareforests-audio/9'})">Sample 9</button>
+        </div>
 
     </body>
 </html>

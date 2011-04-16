@@ -42,6 +42,18 @@ class WebMixIn:
         if 'cmd' in msg:
             if msg['cmd'] == 'queue':
                 self.queueAll(msg['filename'])
+                self.pingWebSessions()
+
+            if msg['cmd'] == 'setlive':
+                self.sessions[msg['channel']].isLivePhone = True
+                self.admin.sendMessage({'action': 'ConferenceUnmute', 'Conference': 'weareforests', 'User': self.sessions[msg['channel']].conferenceUserId})
+                self.pingWebSessions()
+
+            if msg['cmd'] == 'unsetlive':
+                self.sessions[msg['channel']].isLivePhone = False
+                self.admin.sendMessage({'action': 'ConferenceMute', 'Conference': 'weareforests', 'User': self.sessions[msg['channel']].conferenceUserId})
+                self.pingWebSessions()
+
         print c, 'says:', msg
 
 

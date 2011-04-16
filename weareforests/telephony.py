@@ -16,6 +16,8 @@ import time
 from epsilon.extime import Time
 from datetime import timedelta
 
+from twisted.internet import reactor
+
 from axiom.item import Item
 from axiom.attributes import text, timestamp, integer
 
@@ -46,6 +48,10 @@ class CallerSession (object):
     channel = None
     callerId = None
     timeStarted = None
+
+    # conference user id
+    conferenceUserId = None
+    isLivePhone = False
 
     # state machine
     state = None
@@ -84,8 +90,11 @@ class CallerSession (object):
 
     def enter_start(self):
         timePoint = Time() - timedelta(minutes=15)
-        self.queue = ["weareforests-audio/silent"] # + [r.filename for r in self.app.store.query(Recording, Recording.created >= timePoint, sort=Recording.created.ascending)]
-        #self.queue = ["weareforests-audio/intro"] + [r.filename for r in self.app.store.query(Recording, Recording.created >= timePoint, sort=Recording.created.ascending)]
+
+        if self.app.baseOpts['debug']:
+            self.queue = ["weareforests-audio/silent"]
+        else:
+            self.queue = ["weareforests-audio/intro"] + [r.filename for r in self.app.store.query(Recording, Recording.created >= timePoint, sort=Recording.created.ascending)]
         self.state.set("play")
 
 
@@ -138,15 +147,18 @@ class CallerSession (object):
         d = self.agi.recordFile(filename, "gsm", chr(self.digit), 45)
 
         def save(r):
-            digit, type, duration = r
+            digit, tpe, duration = r
             rec = Recording(store=self.app.store, filename=unicode(filename), created=start, caller_id=self.callerId, duration=duration)
             print "saved!"
+            if tpe == 'hangup':
+                print "user hung up during recording."
+                self.app.sessionEnded(self.channel)
+
             # add it to everybody's queue
             self.app.recordingAdded(rec)
             # resume play where we stopped
             self.setStateAfterSample("play", "weareforests-audio/listen", currentlyPlaying, offset)
-            #self.state.set("play", currentlyPlaying, offset)
-            #self.state.set("play", currentlyPlaying, offset)
+
         d.addCallback(save)
         d.addErrback(self.catchHangup)
 
