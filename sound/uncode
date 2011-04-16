@@ -1,9 +1,0 @@
-FILE="/home/arjan/Dropbox/We\ Are\ Forests/$1.wav"
-
-if [ "$FILE" = "" ]; then
-   echo "usage uncode <file basename>"
-   exit
-fi
-
-sox "$FILE" -t raw -r 8000 -s -2 -c 1 $1.sln
-echo "OK, generated $1.sln"

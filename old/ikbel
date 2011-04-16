@@ -1,0 +1,53 @@
+// Mediamatic IkBel
+context scripts {
+
+        mmtelefoon => {
+                Answer;
+                Ringing;
+                Wait(2);
+                Playback(mmtelefoon/welkom2);
+                AGI(/home/arjan/mmtelefoon/handle.agi);
+                switch (${EXIT}) {
+                        case DISABLED:
+                                Playback(mmtelefoon/buitengebruik2);
+                                break;
+
+                        case FULL:
+                                Playback(mmtelefoon/bezet2);
+                                break;
+
+                        case NOT_FOUND:
+                                Playback(mmtelefoon/sorry);
+                                break;
+
+                        case NO_FRIENDS:
+                        case ERROR:
+                                Playback(mmtelefoon/error);
+
+                        case OK:
+                                // Set(CALLERID(num)=${MATCH});
+                                // Set(CALLERID(name)=${MATCHNAME});
+                                // SetCallerPres(prohib);
+                                Playback(mmtelefoon/succes);
+                                Dial(Zap/g0/${MATCH});
+                                //Dial(Zap/g0/0641322599);
+                                break;
+
+                        default:
+                                break;
+                };
+                HangUp;
+                Congestion;
+        };
+
+        h => {
+                        DeadAGI(/home/arjan/mmtelefoon/finish.agi);
+        };
+
+        rickroll => {
+                Playback(rick);
+                HangUp;
+        };
+};
+
+(END) 
