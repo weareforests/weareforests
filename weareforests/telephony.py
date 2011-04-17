@@ -19,10 +19,11 @@ from datetime import timedelta
 from twisted.internet import reactor
 
 from axiom.item import Item
-from axiom.attributes import text, timestamp, integer
+from axiom.attributes import text, timestamp, integer, boolean, AND
 
 from sparked import application
 
+from weareforests.pqueue import PriorityQueue
 
 
 class Recording (Item):
@@ -34,6 +35,22 @@ class Recording (Item):
     caller_id = text()
     filename = text()
     duration = integer() # in frames
+    use_in_ending = boolean()
+
+    def filenameAsPath(self, app):
+        """
+        Return absolute filename without extension
+        """
+        base = self.filename.split("/")[1]
+        return app.path("db").child("audio").child(base).path
+
+
+    def filenameAsURL(self):
+        """
+        Return filename (no extension!) as url
+        """
+        base = self.filename.split("/")[1]
+        return "/recordings/" + base
 
 
 
@@ -60,7 +77,7 @@ class CallerSession (object):
     def __init__(self, app, agi):
         self.app = app
         self.agi = agi
-        self.queue = []
+        self.queue = PriorityQueue()
         print self.agi.variables
         self.callerId = unicode(self.agi.variables['agi_callerid'])
         self.channel = self.agi.variables['agi_channel']
@@ -78,23 +95,44 @@ class CallerSession (object):
             self.state.set('play')
         if self.state.get == 'to_admin':
             self.setStateAfterSample("admin", "digits/0")
+        if self.state.get == 'to_ending':
+            self.queue = PriorityQueue()
+            for f in [r.filename for r in self.app.store.query(Recording, Recording.use_in_ending == True, sort=Recording.created.descending)]:
+                self.queueAdd(f)
+            self.state.set('ending')
+
+
+    def enter_ending(self):
+        if self.queue.isEmpty():
+            self.state.set("ended")
+            self.app.pingWebSessions()
+            return
+        item = self.queue.pop()
+        self.app.pingWebSessions()
+        self.setStateAfterSample("ending", item)
+
+
+    def enter_ended(self):
+        self.setStateAfterSample("ending", "weareforests-audio/silent")
 
 
     def queueAdd(self, r):
-        self.queue.append(r)
+        self.queue.append(10, r)
 
 
     def queueAddFirst(self, r):
-        self.queue.insert(0, r)
+        self.queue.append(5, r)
 
 
     def enter_start(self):
         timePoint = Time() - timedelta(minutes=15)
 
         if self.app.baseOpts['debug']:
-            self.queue = ["weareforests-audio/silent"]
+            self.queueAdd("weareforests-audio/silent")
         else:
-            self.queue = ["weareforests-audio/intro"] + [r.filename for r in self.app.store.query(Recording, Recording.created >= timePoint, sort=Recording.created.ascending)]
+            self.queueAdd("weareforests-audio/intro")
+            for f in [r.filename for r in self.app.store.query(Recording, AND(Recording.created >= timePoint, Recording.use_in_ending == False), sort=Recording.created.ascending)]:
+                self.queueAdd(f)
         self.state.set("play")
 
 
@@ -107,13 +145,11 @@ class CallerSession (object):
 
         # look up the next recording
         if not recording:
-            if not self.queue:
+            if self.queue.isEmpty():
                 # if no recording, transfer to conference
                 self.app.transferToConference(self)
             else:
-                current = self.queue[0]
-                del self.queue[0]
-
+                current = self.queue.pop()
         else:
             current = recording
 
@@ -169,6 +205,7 @@ class CallerSession (object):
             print "audio done"
             self.state.set(state, *args)
         d.addCallback(audioDone)
+        d.addErrback(self.catchHangup)
 
 
     def enter_admin(self):
@@ -191,7 +228,8 @@ class CallerSession (object):
 
 
     def catchHangup(self, f):
-        if self.state.get == 'to_conference':
+        self.agi.finish()
+        if self.state.get[:3] == 'to_':
             return
 
         print "***", f

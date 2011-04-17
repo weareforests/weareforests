@@ -9,9 +9,11 @@
 # Source code (c) 2011 Arjan Scherpenisse <arjan@scherpenisse.net>
 # This code is released under the MIT license. See LICENSE for details.
 
+import os
+
 from twisted.internet import reactor, defer, task
 from twisted.python import log
-
+from epsilon.extime import Time
 from sparked import application
 
 from starpy import fastagi, manager
@@ -62,6 +64,22 @@ class Application (application.Application, web.WebMixIn):
         self.sessions = {}
 
 
+    def enter_start(self):
+        self.state.set("normal")
+
+
+    def enter_normal(self):
+        self.webio.sendAll({'event': "state-change", 'state': 'normal'})
+
+
+    def enter_ending(self):
+        self.webio.sendAll({'event': "state-change", 'state': 'ending'})
+        # transfer all sessions to the ending AGI
+        for session in self.sessions.values():
+            session.state.set("to_ending")
+            self.redirect(session, EXTEN_AGI)
+
+
     def connected(self, agi):
         channel = agi.variables['agi_channel']
         if channel not in self.sessions:
@@ -74,14 +92,6 @@ class Application (application.Application, web.WebMixIn):
         self.pingWebSessions()
 
 
-    def getIdleRecordings(self):
-        r = list(self.store.query(Recording, Recording.filename == u'weareforests-audio/silent'))
-        if r:
-            return r
-        rec = Recording(store=self.store, filename=u'weareforests-audio/silent')
-        return [rec]
-
-
     def sessionEnded(self, channel):
         print 'session ended', channel
         del self.sessions[channel]
@@ -89,6 +99,8 @@ class Application (application.Application, web.WebMixIn):
 
 
     def recordingAdded(self, r):
+        self.convertToMP3(r)
+        self.pingWebRecordings()
         for session in self.sessions.values():
             if session.isLivePhone:
                 continue
@@ -121,28 +133,52 @@ class Application (application.Application, web.WebMixIn):
         self.webio.sendAll({'event': "sessions-change", 'sessions': self.sessionsToJSON()})
 
 
+    def pingWebRecordings(self):
+        """
+        Ping all connected web clients with the list of current recordings.
+        """
+        self.webio.sendAll({'event': "recordings-change", 'recordings': self.recordingsToJSON()})
+
+
     def sessionsToJSON(self):
         s = []
         for session in self.sessions.values():
             s.append({'callerId': session.callerId,
                       'state': session.state.get,
-                      'timeStarted': session.timeStarted,
+                      'timeStarted': Time.fromPOSIXTimestamp(session.timeStarted).asHumanly(),
                       'channel': session.channel,
                       'isLive': session.isLivePhone,
-                      'queue': session.queue})
+                      'queue': list(session.queue)})
         return s
 
+
+    def recordingsToJSON(self):
+        s = []
+        def timefmt(sec):
+            return "%d:%02d" % (sec // 60, sec % 60)
+        for r in self.store.query(telephony.Recording, sort=telephony.Recording.created.ascending):
+            s.append({'id': r.storeID,
+                      'time': r.created.asHumanly(),
+                      'callerId': r.caller_id,
+                      'url': r.filenameAsURL() + ".mp3",
+                      'use_in_ending': r.use_in_ending,
+                      'duration': timefmt(r.duration/8000)})
+        return s
+
+
+    def redirect(self, session, exten):
+        self.admin.redirect(session.channel, 'default', exten, '1')
 
 
     def transferToConference(self, session):
         session.state.set("to_conference")
+        self.redirect(session, EXTEN_CONFERENCE)
         self.pingWebSessions()
-        self.admin.redirect(session.channel, 'default', EXTEN_CONFERENCE, '1').addCallback(lambda _: session.agi.finish())
 
 
     def transferToAGI(self, session, state):
         session.state.set(state)
-        self.admin.redirect(session.channel, 'default', EXTEN_AGI, '1')
+        self.redirect(session, EXTEN_AGI)
         self.pingWebSessions()
 
 
@@ -179,3 +215,8 @@ class Application (application.Application, web.WebMixIn):
         if e['key'] == '0' and self.isAdmin(session):
             # trigger recording from conference
             self.transferToAGI(session, 'to_admin')
+
+
+    def convertToMP3(self, recording):
+        fn = recording.filenameAsPath(self)
+        os.system("sox -t gsm -r 8000 -c 1 %s.gsm -t raw - | lame -r -m m -s 8 - %s.mp3 &" % (fn, fn))

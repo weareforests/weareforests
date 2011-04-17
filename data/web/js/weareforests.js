@@ -5,23 +5,53 @@
         var tb = $("#sessions tbody");
         tb.children().remove();
         $(sessions).each(function (i, v) {
-                             var t = (new Date(v.timeStarted*1000));
-
                              var liveEl;
-                             if (!v.isLive)
+                             if (v.state == 'conference')
                              {
-                                 liveEl = $("<a>").attr("href", "javascript:;").click(function(){IO.send({'cmd': 'setlive', 'channel': v.channel})}).text("set live");
+                                 liveEl = $("<span>")
+                                     .append($("<input>")
+                                             .attr("type", "checkbox")
+                                             .attr("checked", v.isLive ? "checked": "")
+                                             .click(function() { 
+                                                        IO.send({'cmd': 'toggleLive', 'channel': v.channel});
+                                                    }))
+                                     .append("can speak");
                              }
                              else
                              {
-                                 liveEl = $("<a>").attr("href", "javascript:;").click(function(){IO.send({'cmd': 'unsetlive', 'channel': v.channel})}).text("unset live");
+                                 liveEl = '&nbsp;';
                              }
                              $("<tr>")
                                  .append($("<td>").text(v.callerId))
-                                 .append($("<td>").text(t.toLocaleTimeString()))
-                                 .append($("<td>").text(v.state + (v.state == "play" ? " (" + (v.queue.length+1) + ")" : "")))
-                                 .append($("<td>").append(v.state == "conference" ? liveEl : "&nbsp;"))
+                                 .append($("<td>").text(v.timeStarted))
+                                 .append($("<td>").text(v.state + ((v.state == "play" || v.state == "ending") ? " (" + (v.queue.length+1) + ")" : "")))
+                                 .append($("<td>").append(liveEl))
                                  .appendTo(tb);
+                         });
+    }
+
+
+    function refreshRecordings (recordings)
+    {
+        var tb = $("#recordings tbody");
+        tb.children().remove();
+        $(recordings).each(function (i, v) {
+                             $("<tr>")
+                                   .append($("<td>").text(v.callerId))
+                                   .append($("<td>").text(v.time))
+                                   .append($("<td>").text(v.duration))
+                                   .append($("<td>")
+                                           .append($("<button>").text("Preview").click(function(){$("#audio").attr("src", v.url).get(0).play();}))
+                                           .append($("<input>")
+                                                   .attr("type", "checkbox")
+                                                   .attr("checked", v.use_in_ending ? "checked": "")
+                                                   .click(function() { 
+                                                              IO.send({'cmd': 'toggleUseInEnding', 'id': v.id});
+                                                          })
+                                                  )
+                                           .append("use in ending")
+                                          )
+                                   .appendTo(tb);
                          });
     }
 
@@ -34,6 +64,21 @@
         {
         case "sessions-change":
             refreshSessions(msg.sessions);
+            break;
+        case "recordings-change":
+            refreshRecordings(msg.recordings);
+            break;
+        case "state-change":
+            $("#state").text(msg.state);
+            if (msg.state == 'normal')
+            {
+                $("#state").append($("<button>")
+                                   .text("go to ending")
+                                   .click(function() {
+                                              if (confirm('Are you sure?')) {
+                                                  IO.send({'cmd': 'doEnding'});
+                                              }}));
+            }
             break;
         }
     });

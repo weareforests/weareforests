@@ -5,6 +5,8 @@
         <script src="/js/weareforests.js" type="text/javascript"></script>
     </head>
     <body>
+        <h1>We Are Forests</h1>
+        <h2>System state: <span id="state"></span></h2>
 
         <h2>Current sessions</h2>
         <div id="sessions">
@@ -39,6 +41,27 @@
             <button onclick="IO.send({cmd: 'queue', filename: 'weareforests-audio/8'})">Sample 8</button>
             <button onclick="IO.send({cmd: 'queue', filename: 'weareforests-audio/9'})">Sample 9</button>
         </div>
+
+        <h2>Recordings</h2>
+        <audio id="audio">Your browser does not support playing audio.</audio>
+
+        <div id="recordings">
+            <table border="1" width="800">
+                <thead>
+                    <tr>
+                        <th width="30%">Caller id</th>
+                        <th width="15%">Time</th>
+                        <th width="15%">Duration</th>
+                        <th width="40%">Options</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="3">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <button onclick="$('#audio').get(0).pause();">Stop playback</button>
 
     </body>
 </html>
