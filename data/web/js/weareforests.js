@@ -6,7 +6,7 @@
         tb.children().remove();
         $(sessions).each(function (i, v) {
                              var liveEl;
-                             if (v.state == 'conference')
+                             if (v.state == 'conference' || !v.isLive)
                              {
                                  liveEl = $("<span>")
                                      .append($("<input>")

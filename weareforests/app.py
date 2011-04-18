@@ -202,7 +202,10 @@ class Application (application.Application, web.WebMixIn):
         session.state.set("conference")
         session.conferenceUserId = e['member']
 
-        self.admin.sendMessage({'action': 'ConferenceMute', 'Conference': 'weareforests', 'User': e['member']})
+        if not session.isLivePhone:
+            self.admin.sendMessage({'action': 'ConferenceMute', 'Conference': 'weareforests', 'User': e['member']})
+        else:
+            self.admin.sendMessage({'action': 'ConferenceUnmute', 'Conference': 'weareforests', 'User': e['member']})
 
         self.pingWebSessions()
 

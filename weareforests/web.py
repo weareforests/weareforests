@@ -54,6 +54,10 @@ class WebMixIn:
             if msg['cmd'] == 'toggleLive':
                 session = self.sessions[msg['channel']]
                 session.isLivePhone = not session.isLivePhone
+                if session.isLivePhone and session.state.get != "conference":
+                    self.transferToConference(session)
+                    return
+
                 if session.isLivePhone:
                     action = 'ConferenceUnmute'
                 else:
