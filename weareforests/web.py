@@ -80,6 +80,9 @@ class WebMixIn:
                 self.useRecordingsInEnding = msg['value']
                 self.webio.sendAll({'event': "userecordings-change", 'value': self.useRecordingsInEnding})
 
+            if msg['cmd'] == 'testOriginate':
+                self.admin.originate("SIP/5010@scherpenisse.net", "default", "502", 1, 30)
+
         print c, 'says:', msg
 
 
