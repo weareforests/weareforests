@@ -177,7 +177,7 @@ class Application (application.Application, web.WebMixIn):
 
 
     def redirect(self, session, exten):
-        self.admin.redirect(session.channel, 'default', exten, '1')
+        self.admin.redirect(session.channel, 'default', exten, '2')
 
 
     def transferToConference(self, session):

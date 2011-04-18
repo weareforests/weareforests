@@ -230,9 +230,10 @@ class CallerSession (object):
 
 
     def catchHangup(self, f):
-        self.agi.finish()
+        d = self.agi.finish()
         if self.state.get[:3] == 'to_':
-            return
+            return d
 
         print "***", f
-        self.app.sessionEnded(self.channel)
+        d.addCallback(lambda _: self.app.sessionEnded(self.channel))
+        return d
