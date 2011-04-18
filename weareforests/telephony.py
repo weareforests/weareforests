@@ -93,6 +93,8 @@ class CallerSession (object):
             self.setStateAfterSample("recording", "weareforests-audio/record")
         if self.state.get == 'to_play':
             self.state.set('play')
+        if self.state.get == 'to_start':
+            self.state.set('start')
         if self.state.get == 'to_admin':
             self.setStateAfterSample("admin", "digits/0")
         if self.state.get == 'to_ending':
@@ -113,7 +115,7 @@ class CallerSession (object):
 
 
     def enter_ended(self):
-        self.setStateAfterSample("ending", "weareforests-audio/silent")
+        self.setStateAfterSample("ended", "weareforests-audio/silent")
 
 
     def queueAdd(self, r):

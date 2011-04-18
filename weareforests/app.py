@@ -36,6 +36,8 @@ EXTEN_AGI = '502'
 
 class Application (application.Application, web.WebMixIn):
 
+    useRecordingsInEnding = False
+
 
     def started(self):
 
@@ -66,6 +68,9 @@ class Application (application.Application, web.WebMixIn):
 
     def enter_start(self):
         self.state.set("normal")
+        for session in self.sessions.values():
+            session.state.set("to_start")
+            self.redirect(session, EXTEN_AGI)
 
 
     def enter_normal(self):
@@ -100,7 +105,12 @@ class Application (application.Application, web.WebMixIn):
 
     def recordingAdded(self, r):
         self.convertToMP3(r)
+        r.use_in_ending = self.useRecordingsInEnding
         self.pingWebRecordings()
+        if self.useRecordingsInEnding:
+            # do not directly play back
+            return
+
         for session in self.sessions.values():
             if session.isLivePhone:
                 continue
@@ -123,7 +133,7 @@ class Application (application.Application, web.WebMixIn):
             session.queueAddFirst(filename)
             if session.state.get == 'conference':
                 self.transferToAGI(session, 'to_play')
-
+        self.pingWebSessions()
 
 
     def pingWebSessions(self):
@@ -219,4 +229,4 @@ class Application (application.Application, web.WebMixIn):
 
     def convertToMP3(self, recording):
         fn = recording.filenameAsPath(self)
-        os.system("sox -t gsm -r 8000 -c 1 %s.gsm -t raw - | lame -r -m m -s 8 - %s.mp3 &" % (fn, fn))
+        os.system("sox -t gsm -r 8000 -c 1 %s.gsm -r 44100 -t raw - | lame -r -m m -s 44.1 - %s.mp3 &" % (fn, fn))

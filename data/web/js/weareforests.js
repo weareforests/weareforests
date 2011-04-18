@@ -70,18 +70,28 @@
             break;
         case "state-change":
             $("#state").text(msg.state);
-            if (msg.state == 'normal')
-            {
-                $("#state").append($("<button>")
-                                   .text("go to ending")
-                                   .click(function() {
-                                              if (confirm('Are you sure?')) {
-                                                  IO.send({'cmd': 'doEnding'});
-                                              }}));
-            }
+            var btn = {'normal': {text: "go to ending", cmd: 'doEnding'},
+                       'ending': {text: "restart", cmd: 'doRestart'}};
+            $("#state").append($("<button>")
+                               .text(btn[msg.state].text)
+                               .click(function() {
+                                          if (confirm('Are you sure?')) {
+                                              IO.send({'cmd': btn[msg.state].cmd});
+                                          }}));
+            break;
+        case "userecordings-change":
+            var id = "#use-recordings-" + (msg.value ? 'ending' : 'default');
+            $(id).attr("checked", true);
             break;
         }
     });
 
+    $(document).ready(function() 
+    {
+        $("input[name=use-recordings]").click(function() 
+                                              {
+                                                  IO.send({'cmd': 'appUseRecordingsInEnding', 'value': $(this).attr("id") == 'use-recordings-ending'});
+                                              });
+    });
 
 })();

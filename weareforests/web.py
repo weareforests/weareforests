@@ -37,6 +37,7 @@ class WebMixIn:
 
         # send initial state frame
         c.send({'event': "state-change", 'state': self.state.get})
+        c.send({'event': "userecordings-change", 'value': self.useRecordingsInEnding})
         c.send({'event': 'sessions-change', 'sessions': self.sessionsToJSON()})
         c.send({'event': 'recordings-change', 'recordings': self.recordingsToJSON()})
 
@@ -67,6 +68,13 @@ class WebMixIn:
 
             if msg['cmd'] == 'doEnding':
                 self.state.set('ending')
+
+            if msg['cmd'] == 'doRestart':
+                self.state.set('start')
+
+            if msg['cmd'] == 'appUseRecordingsInEnding':
+                self.useRecordingsInEnding = msg['value']
+                self.webio.sendAll({'event': "userecordings-change", 'value': self.useRecordingsInEnding})
 
         print c, 'says:', msg
 

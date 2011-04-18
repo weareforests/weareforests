@@ -7,7 +7,6 @@
     <body>
         <h1>We Are Forests</h1>
         <h2>System state: <span id="state"></span></h2>
-
         <h2>Current sessions</h2>
         <div id="sessions">
             <table border="1" width="800">
@@ -43,6 +42,13 @@
         </div>
 
         <h2>Recordings</h2>
+
+        <p>
+            New recordings are 
+            <label><input type="radio" name="use-recordings" id="use-recordings-default" /> played back directly</label>
+            <label><input type="radio" name="use-recordings" id="use-recordings-ending" /> played back at the ending</label>
+        </p>
+
         <audio id="audio">Your browser does not support playing audio.</audio>
 
         <div id="recordings">
@@ -61,7 +67,7 @@
             </table>
         </div>
 
-        <button onclick="$('#audio').get(0).pause();">Stop playback</button>
+        <!-- <button onclick="$('#audio').get(0).pause();">Stop playback</button> -->
 
     </body>
 </html>
