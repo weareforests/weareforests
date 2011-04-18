@@ -172,27 +172,30 @@ class Application (application.Application, web.WebMixIn):
 
 
     def redirect(self, session, exten):
-        self.admin.redirect(session.channel, 'default', exten, '1')
+        d = self.admin.redirect(session.channel, 'default', exten, '1')
+        def logAndDisconnect(f):
+            print "*** TRANSFER FAILURE"
+            log.err(f)
+        d.addErrback(logAndDisconnect)
+        d.addCallback(lambda _: self.pingWebSessions())
 
 
     def transferToConference(self, session):
         session.state.set("to_conference")
         self.redirect(session, EXTEN_CONFERENCE)
-        self.pingWebSessions()
 
 
     def transferToAGI(self, session, state):
         session.state.set(state)
         self.redirect(session, EXTEN_AGI)
-        self.pingWebSessions()
 
 
     def conferenceJoin(self, admin, e):
-        print e
         channel = e['channel']
         if channel not in self.sessions:
             print "???", e
             return
+        print "%s joined the conference" % channel
         session = self.sessions[channel]
         session.state.set("conference")
         session.conferenceUserId = e['member']
@@ -201,12 +204,12 @@ class Application (application.Application, web.WebMixIn):
             self.admin.sendMessage({'action': 'ConferenceMute', 'Conference': 'weareforests', 'User': e['member']})
         else:
             self.admin.sendMessage({'action': 'ConferenceUnmute', 'Conference': 'weareforests', 'User': e['member']})
-
         self.pingWebSessions()
 
 
     def conferenceLeave(self, admin, e):
         session = self.sessions[e['channel']]
+        print "%s left the conference" % e['channel']
         if session.state.get[:3] == 'to_':
             return
         # hangup
