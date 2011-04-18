@@ -22,13 +22,8 @@ from axiom.store import Store
 
 from weareforests import telephony, web
 
+
 WHITELIST=["5010", "0653638994", "0641322599", "0653639052"]
-
-
-import logging
-lg = logging.getLogger('AMI')
-lg.setLevel(logging.DEBUG)
-
 
 EXTEN_CONFERENCE = '503'
 EXTEN_AGI = '502'
@@ -177,7 +172,7 @@ class Application (application.Application, web.WebMixIn):
 
 
     def redirect(self, session, exten):
-        self.admin.redirect(session.channel, 'default', exten, '2')
+        self.admin.redirect(session.channel, 'default', exten, '1')
 
 
     def transferToConference(self, session):
