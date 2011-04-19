@@ -92,6 +92,13 @@
                                               {
                                                   IO.send({'cmd': 'appUseRecordingsInEnding', 'value': $(this).attr("id") == 'use-recordings-ending'});
                                               });
+
+        $("#callForm").submit(function(e) {
+                                  e.preventDefault();
+                                  var tel = $("#telephone").val();
+                                  if (!tel.match(/^\+(31|36)/)) { alert("invalid phone nr");return;}
+                                  IO.send({'cmd': 'call', 'nr': tel});
+                              });
     });
 
 })();

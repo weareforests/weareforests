@@ -68,7 +68,9 @@
         </div>
 
         <!-- <button onclick="$('#audio').get(0).pause();">Stop playback</button> -->
-        <button onclick="IO.send({'cmd': 'testOriginate'})">Test placing call</button>
-
+        <h2>Start call</h2>
+        <form id="callForm">
+            <input id="telephone" value="+" /><button>Call</button>
+        </form>
     </body>
 </html>

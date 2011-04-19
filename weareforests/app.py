@@ -55,7 +55,7 @@ class Application (application.Application, web.WebMixIn):
             self.admin.registerEvent("ConferenceDTMF", self.conferenceDTMF)
             self.admin.registerEvent("ConferenceJoin", self.conferenceJoin)
             self.admin.registerEvent("ConferenceLeave", self.conferenceLeave)
-
+            self.admin.registerEvent("OriginateResponse", self.originateResponse)
         f.login("127.0.0.1", 5038).addCallback(r)
 
         self.sessions = {}
@@ -231,3 +231,20 @@ class Application (application.Application, web.WebMixIn):
     def convertToMP3(self, recording):
         fn = recording.filenameAsPath(self)
         os.system("sox -t gsm -r 8000 -c 1 %s.gsm -r 44100 -t raw - | lame -r -m m -s 44.1 - %s.mp3 &" % (fn, fn))
+
+
+    def call(self, nr):
+        mapping = {'+31': '31207173677',
+                   '+36': '3617009942'}
+
+        addr = "SIP/0%s@%s" % (nr[3:], mapping[nr[:3]])
+        print "Calling:", addr
+        d = self.admin.originate("SIP/0641322599@31207173677", "to-external", "1", 1, timeout=30, callerid=nr, async=False)
+        d.addCallback(log.msg)
+
+
+    def originateResponse(self, admin, e):
+        print "**********************"
+        print e
+        print "**********************"
+
