@@ -36,21 +36,41 @@ class Recording (Item):
     filename = text()
     duration = integer() # in frames
     use_in_ending = boolean()
+    user_recording = boolean()
+
 
     def filenameAsPath(self, app):
         """
         Return absolute filename without extension
         """
-        base = self.filename.split("/")[1]
-        return app.path("db").child("audio").child(base).path
+        return app.path("db").child("recordings").child(self.filename).path
 
 
     def filenameAsURL(self):
         """
         Return filename (no extension!) as url
         """
-        base = self.filename.split("/")[1]
-        return "/recordings/" + base
+        return "/recordings/" + self.filename
+
+
+    def filenameAsAsterisk(self):
+        return "weareforests-recordings/%s" % self.filename
+
+
+    @staticmethod
+    def userRecordingFilename(app):
+        """
+        Generate a new filename for a user recording.
+        """
+        base = "user-%d" % time.time()
+        fn = base
+        f = app.path("db").child("recordings").child(fn)
+        i = 1
+        while f.exists():
+            fn = base+("-%d"%i)
+            f = app.path("db").child("recordings").child(fn)
+            i += 1
+        return fn
 
 
 
@@ -99,7 +119,7 @@ class CallerSession (object):
             self.setStateAfterSample("admin", "digits/0")
         if self.state.get == 'to_ending':
             self.queue = PriorityQueue()
-            for f in [r.filename for r in self.app.store.query(Recording, Recording.use_in_ending == True, sort=Recording.created.descending)]:
+            for f in [r.filenameAsAsterisk() for r in self.app.store.query(Recording, Recording.use_in_ending == True, sort=Recording.created.descending)]:
                 self.queueAdd(f)
             self.state.set('ending')
 
@@ -133,7 +153,7 @@ class CallerSession (object):
             self.queueAdd("weareforests-audio/silent")
         else:
             self.queueAdd("weareforests-audio/intro")
-            for f in [r.filename for r in self.app.store.query(Recording, AND(Recording.created >= timePoint, Recording.use_in_ending == False), sort=Recording.created.ascending)]:
+            for f in [r.filenameAsAsterisk() for r in self.app.store.query(Recording, AND(Recording.created >= timePoint, Recording.use_in_ending == False), sort=Recording.created.ascending)]:
                 self.queueAdd(f)
         self.state.set("play")
 
@@ -181,12 +201,12 @@ class CallerSession (object):
         self.app.pingWebSessions()
 
         start = Time()
-        filename = "weareforests-recordings/%s" % hashlib.sha1(str(time.time())).hexdigest()
-        d = self.agi.recordFile(filename, "gsm", chr(self.digit), 45)
+        filename = Recording.userRecordingFilename(self.app)
+        d = self.agi.recordFile("weareforests-recordings/" + filename, "gsm", chr(self.digit), 45)
 
         def save(r):
             digit, tpe, duration = r
-            rec = Recording(store=self.app.store, filename=unicode(filename), created=start, caller_id=self.callerId, duration=duration)
+            rec = Recording(store=self.app.store, filename=unicode(filename), created=start, caller_id=self.callerId, duration=duration, user_recording=True)
             print "saved!"
             if tpe == 'hangup':
                 print "user hung up during recording."

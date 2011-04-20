@@ -109,7 +109,7 @@ class Application (application.Application, web.WebMixIn):
         for session in self.sessions.values():
             if session.isLivePhone:
                 continue
-            session.queueAdd(r.filename)
+            session.queueAdd(r.filenameAsAsterisk())
             if session.state.get == 'conference':
                 self.transferToAGI(session, 'to_play')
 

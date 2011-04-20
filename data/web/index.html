@@ -24,27 +24,16 @@
             </table>
         </div>
 
-        <h2>Queueing files</h2>
-        <div>
-            <button onclick="IO.send({cmd: 'queue', filename: 'weareforests-audio/1'})">Sample 1</button>
-            <button onclick="IO.send({cmd: 'queue', filename: 'weareforests-audio/2'})">Sample 2</button>
-            <button onclick="IO.send({cmd: 'queue', filename: 'weareforests-audio/3'})">Sample 3</button>
-        </div>
-        <div>
-            <button onclick="IO.send({cmd: 'queue', filename: 'weareforests-audio/4'})">Sample 4</button>
-            <button onclick="IO.send({cmd: 'queue', filename: 'weareforests-audio/5'})">Sample 5</button>
-            <button onclick="IO.send({cmd: 'queue', filename: 'weareforests-audio/6'})">Sample 6</button>
-        </div>
-        <div>
-            <button onclick="IO.send({cmd: 'queue', filename: 'weareforests-audio/7'})">Sample 7</button>
-            <button onclick="IO.send({cmd: 'queue', filename: 'weareforests-audio/8'})">Sample 8</button>
-            <button onclick="IO.send({cmd: 'queue', filename: 'weareforests-audio/9'})">Sample 9</button>
-        </div>
 
         <h2>Recordings</h2>
+        <form method="post" action="/upload">
+            <input type="file" name="file" id="upload" />
+        </form>
+
+        <h2>User recordings</h2>
 
         <p>
-            New recordings are 
+            Recordings that listeners make are
             <label><input type="radio" name="use-recordings" id="use-recordings-default" /> played back directly</label>
             <label><input type="radio" name="use-recordings" id="use-recordings-ending" /> played back at the ending</label>
         </p>
@@ -67,10 +56,11 @@
             </table>
         </div>
 
-        <!-- <button onclick="$('#audio').get(0).pause();">Stop playback</button> -->
-        <h2>Start call</h2>
-        <form id="callForm">
-            <input id="telephone" value="+" /><button>Call</button>
-        </form>
+        <button onclick="$('#audio').get(0).pause();">Stop playback</button>
+        <!-- <h2>Start call</h2> -->
+        <!-- <form id="callForm"> -->
+        <!--     <input id="telephone" value="+" /><button>Call</button> -->
+        <!-- </form> -->
+
     </body>
 </html>

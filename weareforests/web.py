@@ -23,7 +23,7 @@ class WebMixIn:
         root = resource.Resource()
         root.putChild("", static.File(self.path("data").child("web").child("index.html").path))
         root.putChild("js", static.File(self.path("data").child("web").child("js").path))
-        root.putChild("recordings", static.File(self.path("db").child("audio").path))
+        root.putChild("recordings", static.File(self.path("db").child("recordings").path))
         site = server.Site(root)
         self.webio = listen(site)
         reactor.listenTCP(8880, site)

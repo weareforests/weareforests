@@ -41,7 +41,7 @@
                                    .append($("<td>").text(v.time))
                                    .append($("<td>").text(v.duration))
                                    .append($("<td>")
-                                           //.append($("<button>").text("Preview").click(function(){$("#audio").attr("src", v.url).get(0).play();}))
+                                           .append($("<button>").text("Preview").click(function(){$("#audio").attr("src", v.url).get(0).play();}))
                                            .append($("<input>")
                                                    .attr("type", "checkbox")
                                                    .attr("checked", v.use_in_ending ? "checked": "")
@@ -99,6 +99,9 @@
                                   if (!tel.match(/^\+(31|36)/)) { alert("invalid phone nr");return;}
                                   IO.send({'cmd': 'call', 'nr': tel});
                               });
+
+        $("#upload").change(function() { $(this.form).submit(); });
+
     });
 
 })();
