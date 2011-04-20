@@ -31,17 +31,19 @@
     }
 
 
-    function refreshRecordings (recordings)
+    function refreshRecordings (recordings, id)
     {
-        var tb = $("#recordings tbody");
+        var tb = $("#" + id + " tbody");
         tb.children().remove();
         $(recordings).each(function (i, v) {
                              $("<tr>")
-                                   .append($("<td>").text(v.callerId))
+                                   .append($("<td>").text(v.title))
                                    .append($("<td>").text(v.time))
                                    .append($("<td>").text(v.duration))
                                    .append($("<td>")
-                                           .append($("<button>").text("Preview").click(function(){$("#audio").attr("src", v.url).get(0).play();}))
+                                           .append($("<button>").text("Hear").click(function(){$("#audio").attr("src", v.url).get(0).play();}))
+                                           .append($("<button>").text("Push").click(function(){IO.send({'cmd': 'queue', 'id': v.id});}))
+                                           .append($("<button>").text("Del").click(function(){if (confirm('Are you sure you want to delete '+v.title+'?')){IO.send({'cmd': 'deleteRecording', 'id': v.id});}}))
                                            .append($("<input>")
                                                    .attr("type", "checkbox")
                                                    .attr("checked", v.use_in_ending ? "checked": "")
@@ -65,8 +67,11 @@
         case "sessions-change":
             refreshSessions(msg.sessions);
             break;
-        case "recordings-change":
-            refreshRecordings(msg.recordings);
+        case "web-recordings-change":
+            refreshRecordings(msg.recordings, "web-recordings");
+            break;
+        case "user-recordings-change":
+            refreshRecordings(msg.recordings, "user-recordings");
             break;
         case "state-change":
             $("#state").text(msg.state);

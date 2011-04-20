@@ -48,9 +48,9 @@ class Recording (Item):
 
     def filenameAsURL(self):
         """
-        Return filename (no extension!) as url
+        Return filename as MP3 url
         """
-        return "/recordings/" + self.filename
+        return "/recordings/" + self.filename + ".mp3"
 
 
     def filenameAsAsterisk(self):

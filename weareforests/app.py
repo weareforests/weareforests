@@ -131,46 +131,6 @@ class Application (application.Application, web.WebMixIn):
         self.pingWebSessions()
 
 
-    def pingWebSessions(self):
-        """
-        Ping all connected web clients with the list of current sessions.
-        """
-        self.webio.sendAll({'event': "sessions-change", 'sessions': self.sessionsToJSON()})
-
-
-    def pingWebRecordings(self):
-        """
-        Ping all connected web clients with the list of current recordings.
-        """
-        self.webio.sendAll({'event': "recordings-change", 'recordings': self.recordingsToJSON()})
-
-
-    def sessionsToJSON(self):
-        s = []
-        for session in self.sessions.values():
-            s.append({'callerId': session.callerId,
-                      'state': session.state.get,
-                      'timeStarted': Time.fromPOSIXTimestamp(session.timeStarted).asHumanly(),
-                      'channel': session.channel,
-                      'isLive': session.isLivePhone,
-                      'queue': list(session.queue)})
-        return s
-
-
-    def recordingsToJSON(self):
-        s = []
-        def timefmt(sec):
-            return "%d:%02d" % (sec // 60, sec % 60)
-        for r in self.store.query(telephony.Recording, sort=telephony.Recording.created.ascending):
-            s.append({'id': r.storeID,
-                      'time': r.created.asHumanly(),
-                      'callerId': r.caller_id,
-                      'url': r.filenameAsURL() + ".mp3",
-                      'use_in_ending': r.use_in_ending,
-                      'duration': timefmt(r.duration/8000)})
-        return s
-
-
     def redirect(self, session, exten):
         d = self.admin.redirect(session.channel, 'default', exten, '1')
         def logAndDisconnect(f):
