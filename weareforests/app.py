@@ -228,6 +228,6 @@ class Application (application.Application, web.WebMixIn):
 
 
     def phoneNrToDialString(self, nr):
-        #return "SIP/" + nr + "@3617009942"
-        return "SIP/5010"
+        return "SIP/" + nr + "@3617009942"
+        #return "SIP/5010"
 
