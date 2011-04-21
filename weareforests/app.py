@@ -202,7 +202,7 @@ class Application (application.Application, web.WebMixIn):
 
     def conferenceLeave(self, admin, e):
         session = self.sessions[e['channel']]
-        if session.state.get[:3] == 'to_' or session.agi:
+        if session.state.get != "conference":
             print "Transfered from conference to AGI:", e['channel']
             return
         # hangup
