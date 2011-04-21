@@ -167,6 +167,7 @@ class Application (application.Application, web.WebMixIn):
         d = self.admin.redirect(session.channel, 'default', exten, '1')
         def logAndDisconnect(f):
             print "*** TRANSFER FAILURE"
+            self.sessionEnded(session.channel)
             log.err(f)
         d.addErrback(logAndDisconnect)
         d.addCallback(lambda _: self.pingWebSessions())
