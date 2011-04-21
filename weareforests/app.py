@@ -225,9 +225,11 @@ class Application (application.Application, web.WebMixIn):
         for nr in nrs:
             dial = self.phoneNrToDialString(nr)
             self.admin.originate(dial, "default", EXTEN_AGI_DIALOUT, "1", timeout=30, callerid=nr, async=1).addCallback(log.msg)
+        self.webio.sendAll({'event': 'message', 'title': 'Calling...', 'text': 'Calling %d number(s).' % len(nrs)})
 
 
     def phoneNrToDialString(self, nr):
+        if self.baseOpts['debug']:
+            return "SIP/5010"
         return "SIP/" + nr + "@3617009942"
-        #return "SIP/5010"
 

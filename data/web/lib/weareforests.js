@@ -110,6 +110,7 @@
         $("#callForm").submit(function(e) {
                                   e.preventDefault();
                                   IO.send({'cmd': 'placeCalls', 'nrs': $("#telephone").val()});
+                                  $("#telephone").val("");
                               });
 
         $("#upload").change(function() { $(this.form).submit(); });
