@@ -244,6 +244,7 @@ class CallerSession (object):
 
 
     def catchHangup(self, f):
+        self.queue.empty()
         self.agi.finish()
         if self.state.get[:3] == 'to_':
             return

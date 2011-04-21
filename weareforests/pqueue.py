@@ -13,6 +13,9 @@ class PriorityQueue(object):
     def __init__(self):
         self._q = {}
 
+    def empty(self):
+        self._q = {}
+
     def append(self, p, item):
         assert(type(p) == int)
         if p not in self._q:
