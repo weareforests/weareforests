@@ -234,7 +234,7 @@ class Application (application.Application, web.WebMixIn):
 
 
     def phoneNrToDialString(self, nr):
-        return "SIP/" + nr + " @3617009942"
+        return "SIP/" + nr + "@3617009942"
 
 
     def originateResponse(self, admin, e):
