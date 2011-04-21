@@ -103,7 +103,12 @@ class CallerSession (object):
         self.timeStarted = time.time()
         print "New session from", self.callerId
         self.state = application.StateMachine(self, verbose=1)
-        self.state.set("start")
+
+        script = self.agi.variables.get('agi_network_script', None)
+        if script == 'DialOut':
+            self.state.set("pending_start")
+        else:
+            self.state.set("start")
 
 
     def reEntry(self, agi):
@@ -223,3 +228,22 @@ class CallerSession (object):
 
         print "***", f
         self.app.sessionEnded(self.channel)
+
+
+    def enter_pending_start(self, count=3):
+        """
+        Press 1 to start
+        """
+        self.app.pingWebSessions()
+
+        if count == 0:
+            self.app.admin.hangup(self.channel)
+
+        d = self.agi.streamFile("weareforests-audio/welcome", chr(self.digit))
+        def audioDone(r):
+            digit, offset = r
+            if digit == self.digit:
+                self.app.transferToAGI(self, "to_start")
+            self.state.set("pending_start", count-1)
+        d.addCallback(audioDone)
+        d.addErrback(self.catchHangup)

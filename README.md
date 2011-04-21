@@ -15,14 +15,14 @@ Installation of dependencies
 Add to asterisk's extensions.conf:
 
     [default]
+    exten => 501,1,Answer
+    exten => 501,n,AGI(agi://127.0.0.1:4573/DialOut)
+
     exten => 502,1,Answer
     exten => 502,n,AGI(agi://127.0.0.1:4573)
 
     exten => 503,1,Answer
     exten => 503,n,Konference(weareforests,R)
-
-    [from-external]
-    exten => _X.,1,Goto(default,502,1);
 
 
 Debug mode

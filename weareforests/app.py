@@ -27,8 +27,9 @@ from weareforests import telephony, web
 from weareforests.telephony import Recording
 
 
-EXTEN_CONFERENCE = '503'
+EXTEN_AGI_DIALOUT = '501'
 EXTEN_AGI = '502'
+EXTEN_CONFERENCE = '503'
 
 
 class Application (application.Application, web.WebMixIn):
@@ -55,19 +56,12 @@ class Application (application.Application, web.WebMixIn):
         f = manager.AMIFactory('admin', 'admin')
         def r(proto):
             self.admin = proto
-            self.admin.registerEvent("Newchannel", self.newChannel)
             self.admin.registerEvent("ConferenceDTMF", self.conferenceDTMF)
             self.admin.registerEvent("ConferenceJoin", self.conferenceJoin)
             self.admin.registerEvent("ConferenceLeave", self.conferenceLeave)
-            self.admin.registerEvent("OriginateResponse", self.originateResponse)
         f.login("127.0.0.1", 5038).addCallback(r)
 
         self.sessions = {}
-
-    def newChannel(self, admin, e):
-        print "---------- new channel ---------"
-        print e
-        print "--------------------------------"
 
 
     def enter_start(self):
@@ -151,12 +145,18 @@ class Application (application.Application, web.WebMixIn):
 
 
     def queueAll(self, filename):
+        num = 0
         for session in self.sessions.values():
             if session.isLivePhone:
                 continue
             session.queueAddFirst(filename)
+            num += 1
             if session.state.get == 'conference':
                 self.transferToAGI(session, 'to_play')
+
+        if not num:
+            self.webio.sendAll({'event': 'message', 'title': 'Warning', 'text': 'No listeners to push the recording to.'})
+
         self.pingWebSessions()
 
 
@@ -222,23 +222,12 @@ class Application (application.Application, web.WebMixIn):
 
 
     def placeCalls(self, nrs):
-        # mapping = {r'^\+31.*': '@31207173677',
-        #            '+36': '@3617009942'}
-
-        # addr = "SIP/0%s@%s" % (nr[3:], mapping[nr[:3]])
-        # print "Calling:", addr
-        # d = self.admin.originate("SIP/0641322599@31207173677", "to-external", "1", 1, timeout=30, callerid=nr, async=1)
         for nr in nrs:
             dial = self.phoneNrToDialString(nr)
-            self.admin.originate(dial, "default", EXTEN_AGI, "1", timeout=30, callerid=nr, async=1).addCallback(log.msg)
+            self.admin.originate(dial, "default", EXTEN_AGI_DIALOUT, "1", timeout=30, callerid=nr, async=1).addCallback(log.msg)
 
 
     def phoneNrToDialString(self, nr):
         return "SIP/" + nr + "@3617009942"
-
-
-    def originateResponse(self, admin, e):
-        print "**********************"
-        print e
-        print "**********************"
+        #return "SIP/5010"
 
