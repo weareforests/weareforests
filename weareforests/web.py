@@ -47,7 +47,7 @@ class UploadResource(resource.Resource):
         for part in msg.walk():
             if part.is_multipart():
                 continue
-            if part.get_content_type() == "audio/mp3":
+            if part.get_content_type() in ("audio/mp3", "audio/mpeg"):
                 audiopart = part
                 break
 
