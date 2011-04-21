@@ -156,8 +156,12 @@ class WebMixIn:
                 self.useRecordingsInEnding = msg['value']
                 self.webio.sendAll({'event': "userecordings-change", 'value': self.useRecordingsInEnding})
 
-            if msg['cmd'] == 'call':
-                self.call(msg['nr'])
+            if msg['cmd'] == 'placeCalls':
+                nrs = filter(lambda l: len(l)>0, [l.strip() for l in msg['nrs'].split("\n")])
+                self.placeCalls(nrs)
+
+            if msg['cmd'] == 'hangup':
+                self.admin.hangup(msg['channel'])
 
             if msg['cmd'] == 'deleteRecording':
                 r = self.store.getItemByID(int(msg['id']))

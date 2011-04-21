@@ -9,6 +9,7 @@
                              if (v.state == 'conference' || !v.isLive)
                              {
                                  liveEl = $("<span>")
+                                     .append($("<button>").text("Hangup").click(function(){IO.send({'cmd': 'hangup', 'channel': v.channel});}))
                                      .append($("<input>")
                                              .attr("type", "checkbox")
                                              .attr("checked", v.isLive ? "checked": "")
@@ -108,13 +109,11 @@
 
         $("#callForm").submit(function(e) {
                                   e.preventDefault();
-                                  var tel = $("#telephone").val();
-                                  if (!tel.match(/^\+(31|36)/)) { alert("invalid phone nr");return;}
-                                  IO.send({'cmd': 'call', 'nr': tel});
+                                  IO.send({'cmd': 'placeCalls', 'nrs': $("#telephone").val()});
                               });
 
         $("#upload").change(function() { $(this.form).submit(); });
-        
+
         $.extend($.gritter.options, {
 			         fade_in_speed: 300,
 			         fade_out_speed: 300,

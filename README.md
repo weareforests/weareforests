@@ -3,6 +3,8 @@ Installation
 
 Installation of dependencies
 
+    sudo apt-get install sox lame asterisk
+
     sudo add-apt-repository ppa:arjan-scherpenisse/spark
     sudo apt-get update && sudo apt-get install python-sparked
 

@@ -55,6 +55,7 @@ class Application (application.Application, web.WebMixIn):
         f = manager.AMIFactory('admin', 'admin')
         def r(proto):
             self.admin = proto
+            self.admin.registerEvent("Newchannel", self.newChannel)
             self.admin.registerEvent("ConferenceDTMF", self.conferenceDTMF)
             self.admin.registerEvent("ConferenceJoin", self.conferenceJoin)
             self.admin.registerEvent("ConferenceLeave", self.conferenceLeave)
@@ -62,6 +63,11 @@ class Application (application.Application, web.WebMixIn):
         f.login("127.0.0.1", 5038).addCallback(r)
 
         self.sessions = {}
+
+    def newChannel(self, admin, e):
+        print "---------- new channel ---------"
+        print e
+        print "--------------------------------"
 
 
     def enter_start(self):
@@ -215,14 +221,20 @@ class Application (application.Application, web.WebMixIn):
         os.system("sox -t gsm -r 8000 -c 1 %s.gsm -r 44100 -t raw - | lame -r -m m -s 44.1 - %s.mp3 &" % (fn, fn))
 
 
-    def call(self, nr):
-        mapping = {'+31': '31207173677',
-                   '+36': '3617009942'}
+    def placeCalls(self, nrs):
+        # mapping = {r'^\+31.*': '@31207173677',
+        #            '+36': '@3617009942'}
 
-        addr = "SIP/0%s@%s" % (nr[3:], mapping[nr[:3]])
-        print "Calling:", addr
-        d = self.admin.originate("SIP/0641322599@31207173677", "to-external", "1", 1, timeout=30, callerid=nr, async=False)
-        d.addCallback(log.msg)
+        # addr = "SIP/0%s@%s" % (nr[3:], mapping[nr[:3]])
+        # print "Calling:", addr
+        # d = self.admin.originate("SIP/0641322599@31207173677", "to-external", "1", 1, timeout=30, callerid=nr, async=1)
+        for nr in nrs:
+            dial = self.phoneNrToDialString(nr)
+            self.admin.originate(dial, "default", EXTEN_AGI, "1", timeout=30, callerid=nr, async=1).addCallback(log.msg)
+
+
+    def phoneNrToDialString(self, nr):
+        return "SIP/" + nr + " @3617009942"
 
 
     def originateResponse(self, admin, e):

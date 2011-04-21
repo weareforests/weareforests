@@ -88,10 +88,13 @@
             </div>
 
             <button onclick="$('#audio').get(0).pause();">Stop playback</button>
-            <!-- <h2>Start call</h2> -->
-            <!-- <form id="callForm"> -->
-            <!--     <input id="telephone" value="+" /><button>Call</button> -->
-            <!-- </form> -->
+
+            <h2>Start call</h2>
+            <p>Please enter one international phone number per line. Numbers should start with + and the country code, e.g. +31201234567.</p>
+            <form id="callForm">
+                <textarea id="telephone" rows="6" cols="50"></textarea>
+                <p><button>Place calls!</button></p>
+            </form>
         </div>
 
     </body>
