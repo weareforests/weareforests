@@ -14,7 +14,6 @@ import random
 import time
 
 from epsilon.extime import Time
-from datetime import timedelta
 
 from twisted.internet import reactor
 
@@ -147,14 +146,8 @@ class CallerSession (object):
 
 
     def enter_start(self):
-        timePoint = Time() - timedelta(minutes=15)
-
-        if self.app.baseOpts['debug']:
-            self.queueAdd("weareforests-audio/silent")
-        else:
-            self.queueAdd("weareforests-audio/intro")
-            for f in [r.filenameAsAsterisk() for r in self.app.store.query(Recording, AND(Recording.created >= timePoint, Recording.use_in_ending == False), sort=Recording.created.ascending)]:
-                self.queueAdd(f)
+        for f in self.app.getInitialQueue():
+            self.queueAdd(f)
         self.state.set("play")
 
 
@@ -214,7 +207,7 @@ class CallerSession (object):
                 self.app.sessionEnded(self.channel)
 
             # add it to everybody's queue
-            self.app.recordingAdded(rec)
+            self.app.recordingAdded(self, rec)
             # resume play where we stopped
             self.setStateAfterSample("play", "weareforests-audio/listen", currentlyPlaying, offset)
 

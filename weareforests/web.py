@@ -165,7 +165,7 @@ class WebMixIn:
                 r = self.store.getItemByID(int(msg['id']))
                 path = r.filenameAsPath(self)
                 r.deleteFromStore()
-                os.system("rm %s.*" % path)
+                os.system("rm -f %s.*" % path)
                 self.pingWebRecordings()
 
             if msg['cmd'] == 'queue':

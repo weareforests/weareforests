@@ -1,84 +1,98 @@
 <html>
     <head>
         <script src="/sparked.web.io/lib.js" type="text/javascript"></script>
-        <script src="/js/jquery.min.js" type="text/javascript"></script>
-        <script src="/js/weareforests.js" type="text/javascript"></script>
+        <script src="/lib/jquery.min.js" type="text/javascript"></script>
+        <script src="/lib/weareforests.js" type="text/javascript"></script>
+        <link rel="stylesheet" href="/lib/reset.css" />
+        <link rel="stylesheet" href="/lib/weareforests.css" />
+
+        <script src="/lib/jquery.gritter.min.js" type="text/javascript"></script>
+        <link rel="stylesheet" href="/lib/jquery.gritter.css" />
     </head>
     <body>
-        <h1>We Are Forests</h1>
-        <h2>System state: <span id="state"></span></h2>
-        <h2>Current sessions</h2>
-        <div id="sessions">
-            <table border="1" width="800">
-                <thead>
-                    <tr>
-                        <th width="30%">Caller id</th>
-                        <th width="30%">Connected since</th>
-                        <th width="20%">State</th>
-                        <th width="20%">Options</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td colspan="3">Loading...</td></tr>
-                </tbody>
-            </table>
+        <div id="header">
+            <h1>We Are Forests</h1>
         </div>
+        <div id="content">
+
+            <h2>System state: <span id="state"></span></h2>
+            <div>
+                <button id="state-change">Loading...</button>
+            </div>
+
+            <h2>Current sessions</h2>
+            <div id="sessions">
+                <table class="data">
+                    <thead>
+                        <tr>
+                            <th width="30%">Caller id</th>
+                            <th width="15%">Connected since</th>
+                            <th width="15%">State</th>
+                            <th width="40%">Options</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="3">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
 
 
-        <h2>Recordings</h2>
-        <p>Note: Do not delete recordings while there are listeners connected! (unless they are in "conference" mode)</p>
+            <h2>Recordings</h2>
+            <p>Note: Do not delete recordings while there are listeners connected! (unless they are in "conference" mode)</p>
 
-        <div id="web-recordings">
-            <table border="1" width="800">
-                <thead>
-                    <tr>
-                        <th width="30%">Filename</th>
-                        <th width="15%">Time</th>
-                        <th width="15%">Duration</th>
-                        <th width="40%">Options</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td colspan="3">Loading...</td></tr>
-                </tbody>
-            </table>
+            <div id="web-recordings">
+                <table class="data">
+                    <thead>
+                        <tr>
+                            <th width="30%">Filename</th>
+                            <th width="15%">Time</th>
+                            <th width="15%">Duration</th>
+                            <th width="40%">Options</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="3">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <form method="post" action="/upload" enctype="multipart/form-data">
+                Upload MP3: <input type="file" name="file" id="upload" />
+            </form>
+
+            <h2>User recordings</h2>
+
+            <p>
+                Recordings that listeners make are
+                <label><input type="radio" name="use-recordings" id="use-recordings-default" /> played back directly</label>
+                <label><input type="radio" name="use-recordings" id="use-recordings-ending" /> played back at the ending</label>
+            </p>
+
+            <audio id="audio">Your browser does not support playing audio.</audio>
+
+            <div id="user-recordings">
+                <table class="data">
+                    <thead>
+                        <tr>
+                            <th width="30%">Caller id</th>
+                            <th width="15%">Time</th>
+                            <th width="15%">Duration</th>
+                            <th width="40%">Options</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="3">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <button onclick="$('#audio').get(0).pause();">Stop playback</button>
+            <!-- <h2>Start call</h2> -->
+            <!-- <form id="callForm"> -->
+            <!--     <input id="telephone" value="+" /><button>Call</button> -->
+            <!-- </form> -->
         </div>
-
-        <form method="post" action="/upload" enctype="multipart/form-data">
-            Upload MP3: <input type="file" name="file" id="upload" />
-        </form>
-
-        <h2>User recordings</h2>
-
-        <p>
-            Recordings that listeners make are
-            <label><input type="radio" name="use-recordings" id="use-recordings-default" /> played back directly</label>
-            <label><input type="radio" name="use-recordings" id="use-recordings-ending" /> played back at the ending</label>
-        </p>
-
-        <audio id="audio">Your browser does not support playing audio.</audio>
-
-        <div id="user-recordings">
-            <table border="1" width="800">
-                <thead>
-                    <tr>
-                        <th width="30%">Caller id</th>
-                        <th width="15%">Time</th>
-                        <th width="15%">Duration</th>
-                        <th width="40%">Options</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td colspan="3">Loading...</td></tr>
-                </tbody>
-            </table>
-        </div>
-
-        <button onclick="$('#audio').get(0).pause();">Stop playback</button>
-        <!-- <h2>Start call</h2> -->
-        <!-- <form id="callForm"> -->
-        <!--     <input id="telephone" value="+" /><button>Call</button> -->
-        <!-- </form> -->
 
     </body>
 </html>

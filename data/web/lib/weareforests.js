@@ -67,6 +67,10 @@
 
         switch (msg.event)
         {
+        case "message":
+            $.gritter.add({text:msg.text, title: msg.title, time:2000});
+            break;
+
         case "sessions-change":
             refreshSessions(msg.sessions);
             break;
@@ -80,12 +84,13 @@
             $("#state").text(msg.state);
             var btn = {'normal': {text: "go to ending", cmd: 'doEnding'},
                        'ending': {text: "restart", cmd: 'doRestart'}};
-            $("#state").append($("<button>")
-                               .text(btn[msg.state].text)
-                               .click(function() {
-                                          if (confirm('Are you sure?')) {
-                                              IO.send({'cmd': btn[msg.state].cmd});
-                                          }}));
+            $("#state-change")
+                .text(btn[msg.state].text)
+                .unbind("click")
+                .click(function() {
+                           if (confirm('Are you sure?')) {
+                               IO.send({'cmd': btn[msg.state].cmd});
+                           }});
             break;
         case "userecordings-change":
             var id = "#use-recordings-" + (msg.value ? 'ending' : 'default');
@@ -109,7 +114,12 @@
                               });
 
         $("#upload").change(function() { $(this.form).submit(); });
-
+        
+        $.extend($.gritter.options, {
+			         fade_in_speed: 300,
+			         fade_out_speed: 300,
+			         time: 1500
+                 });
     });
 
 })();

@@ -14,13 +14,17 @@ import os
 from twisted.internet import reactor, defer, task
 from twisted.python import log
 from epsilon.extime import Time
+from datetime import timedelta
+
 from sparked import application
 
 from starpy import fastagi, manager
 
 from axiom.store import Store
+from axiom.attributes import AND
 
 from weareforests import telephony, web
+from weareforests.telephony import Recording
 
 
 WHITELIST=["5010", "0653638994", "0641322599", "0653639052"]
@@ -84,8 +88,9 @@ class Application (application.Application, web.WebMixIn):
     def connected(self, agi):
         channel = agi.variables['agi_channel']
         if channel not in self.sessions:
-            # new recording
+            # new session
             session = telephony.CallerSession(self, agi)
+            self.webio.sendAll({'event': 'message', 'title': 'New caller', 'text': 'Caller id: %s' % session.callerId})
             self.sessions[session.channel] = session
         else:
             # re-entry from conference
@@ -95,13 +100,39 @@ class Application (application.Application, web.WebMixIn):
 
     def sessionEnded(self, channel):
         print 'session ended', channel
+        self.webio.sendAll({'event': 'message', 'title': 'Caller disconnected', 'text': 'Caller id: %s' % self.sessions[channel].callerId})
         del self.sessions[channel]
         self.pingWebSessions()
 
 
-    def recordingAdded(self, r):
+    def getInitialQueue(self):
+        timePoint = Time() - timedelta(minutes=15)
+        print 11
+        try:
+            q = [r.filenameAsAsterisk() for r in self.store.query(Recording, AND(Recording.created >= timePoint, Recording.use_in_ending == False), sort=Recording.created.ascending)]
+        except:
+            log.err()
+        print 2
+        intro = self.getRecordingByName("intro")
+        if intro:
+            q.insert(0, intro.filenameAsAsterisk())
+        print q
+        return q
+
+
+    def getRecordingByName(self, name):
+        r = list(self.store.query(Recording, Recording.filename == unicode(name)))
+        if r:
+            return r[0]
+        return None
+
+
+    def recordingAdded(self, session, r):
         self.convertToMP3(r)
         r.use_in_ending = self.useRecordingsInEnding
+
+        self.webio.sendAll({'event': 'message', 'title': 'New recording', 'text': 'From: %s' % session.callerId})
+
         self.pingWebRecordings()
         if self.useRecordingsInEnding:
             # do not directly play back
