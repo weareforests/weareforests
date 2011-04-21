@@ -27,8 +27,6 @@ from weareforests import telephony, web
 from weareforests.telephony import Recording
 
 
-WHITELIST=["5010", "0653638994", "0641322599", "0653639052"]
-
 EXTEN_CONFERENCE = '503'
 EXTEN_AGI = '502'
 
@@ -146,13 +144,6 @@ class Application (application.Application, web.WebMixIn):
                 self.transferToAGI(session, 'to_play')
 
 
-    def isAdmin(self, session):
-        print "Admin request:", session.callerId
-        if str(session.callerId) in WHITELIST:
-            return True
-        return False
-
-
     def queueAll(self, filename):
         for session in self.sessions.values():
             if session.isLivePhone:
@@ -217,9 +208,6 @@ class Application (application.Application, web.WebMixIn):
         if e['key'] == '1':
             # trigger recording from conference
             self.transferToAGI(session, 'to_recording')
-        if e['key'] == '0' and self.isAdmin(session):
-            # trigger recording from conference
-            self.transferToAGI(session, 'to_admin')
 
 
     def convertToMP3(self, recording):

@@ -114,8 +114,6 @@ class CallerSession (object):
             self.state.set('play')
         if self.state.get == 'to_start':
             self.state.set('start')
-        if self.state.get == 'to_admin':
-            self.setStateAfterSample("admin", "digits/0")
         if self.state.get == 'to_ending':
             self.queue = PriorityQueue()
             for f in [r.filenameAsAsterisk() for r in self.app.store.query(Recording, Recording.use_in_ending == True, sort=Recording.created.descending)]:
@@ -169,18 +167,11 @@ class CallerSession (object):
             current = recording
 
         print "Playing recording: %s, offset %d" % (current, offset)
-        d = self.agi.streamFile(str(current), chr(self.digit)+"0", offset)
+        d = self.agi.streamFile(str(current), chr(self.digit), offset)
         def audioDone(r):
             digit, offset = r
             if digit == self.digit:
                 self.setStateAfterSample("recording", "weareforests-audio/record", current, offset)
-            elif digit == ord("0"):
-                if self.app.isAdmin(self):
-                    self.setStateAfterSample("admin", "digits/0")
-                else:
-                    print "not authorized to enter admin mode from " + self.callerId
-                    # just play the same
-                    self.state.set("play", current)
             else:
                 self.state.set("play")
         d.addCallback(audioDone)
@@ -221,25 +212,6 @@ class CallerSession (object):
             print "audio done"
             self.state.set(state, *args)
         d.addCallback(audioDone)
-        d.addErrback(self.catchHangup)
-
-
-    def enter_admin(self):
-        self.app.pingWebSessions()
-        d = self.agi.getOption("weareforests-audio/silent", "0123456789#")
-
-        def handle(r):
-            digit, endpos = r
-            print digit
-            if digit == "0":
-                self.setStateAfterSample("play", "weareforests-audio/listen")
-                return
-            filename = "weareforests-audio/%s" % digit
-            print "queueing to all: %s" % filename
-            self.app.queueAll(filename)
-            d = self.agi.sayDigits(digit)
-            d.addCallback(lambda _: self.state.set("admin"))
-        d.addCallback(handle)
         d.addErrback(self.catchHangup)
 
 
