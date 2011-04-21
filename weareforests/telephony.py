@@ -43,7 +43,7 @@ class Recording (Item):
         """
         Return absolute filename without extension
         """
-        return app.path("db").child("recordings").child(self.filename).path
+        return app.recordingsPath.child(self.filename).path
 
 
     def filenameAsURL(self):
@@ -64,11 +64,11 @@ class Recording (Item):
         """
         base = "user-%d" % time.time()
         fn = base
-        f = app.path("db").child("recordings").child(fn)
+        f = app.recordingsPath.child(fn)
         i = 1
         while f.exists():
             fn = base+("-%d"%i)
-            f = app.path("db").child("recordings").child(fn)
+            f = app.recordingsPath.child(fn)
             i += 1
         return fn
 
@@ -206,6 +206,7 @@ class CallerSession (object):
 
         def save(r):
             digit, tpe, duration = r
+            duration = duration / 8000
             rec = Recording(store=self.app.store, filename=unicode(filename), created=start, caller_id=self.callerId, duration=duration, user_recording=True)
             print "saved!"
             if tpe == 'hangup':

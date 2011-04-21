@@ -26,6 +26,8 @@
 
 
         <h2>Recordings</h2>
+        <p>Note: Do not delete recordings while there are listeners connected! (unless they are in "conference" mode)</p>
+
         <div id="web-recordings">
             <table border="1" width="800">
                 <thead>
@@ -43,7 +45,7 @@
         </div>
 
         <form method="post" action="/upload" enctype="multipart/form-data">
-            <input type="file" name="file" id="upload" />
+            Upload MP3: <input type="file" name="file" id="upload" />
         </form>
 
         <h2>User recordings</h2>

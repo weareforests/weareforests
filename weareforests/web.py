@@ -15,6 +15,7 @@ from epsilon.extime import Time
 
 from sparked.web.io import listen
 
+import glob
 import os
 import tempfile
 from email.Parser import Parser
@@ -77,8 +78,8 @@ class WebMixIn:
         print self
         root = resource.Resource()
         root.putChild("", static.File(self.path("data").child("web").child("index.html").path))
-        root.putChild("js", static.File(self.path("data").child("web").child("js").path))
-        root.putChild("recordings", static.File(self.path("db").child("recordings").path))
+        root.putChild("lib", static.File(self.path("data").child("web").child("lib").path))
+        root.putChild("recordings", static.File(self.recordingsPath.path))
         root.putChild("upload", UploadResource(self))
         site = server.Site(root)
         self.webio = listen(site)
@@ -104,22 +105,26 @@ class WebMixIn:
     def fileUploaded(self, tmpfile, filename):
         base = filename[:-4] # strip extension
         filename = base
-        f = self.path("db").child("recordings").child(base+".mp3")
+        f = self.recordingsPath.child(base+".mp3")
         i = 0
         while f.exists():
             filename = "%s-%d" % (base, i)
             i += 1
-            f = self.path("db").child("recordings").child(filename+".mp3")
+            f = self.recordingsPath.child(filename+".mp3")
 
+        # copy to dest
         shutil.copyfile(tmpfile, f.path)
-        rec = telephony.Recording(store=self.store, filename=unicode(filename), created=Time(), caller_id=u"web upload", duration=0, user_recording=False)
 
-        print "File uploaded!"
-
+        # convert to mp3
         os.system("lame --decode \"%s\" - | sox - -t raw -r 8000 -s -2 -c 1 \"%s\"" % (f.path, f.path.replace(".mp3", ".sln")))
 
+        # get the duration
+        duration = os.stat(f.path.replace(".mp3", ".sln")).st_size / 16000
+
+        # save it
+        rec = telephony.Recording(store=self.store, filename=unicode(filename), created=Time(), caller_id=u"web upload", duration=duration, user_recording=False)
+
         self.pingWebRecordings()
-        pass
 
 
     def handleMessage(self, msg, c):
@@ -158,8 +163,9 @@ class WebMixIn:
 
             if msg['cmd'] == 'deleteRecording':
                 r = self.store.getItemByID(int(msg['id']))
+                path = r.filenameAsPath(self)
                 r.deleteFromStore()
-                #FIXME delete db files
+                os.system("rm %s.*" % path)
                 self.pingWebRecordings()
 
             if msg['cmd'] == 'queue':
@@ -222,5 +228,5 @@ class WebMixIn:
                       'title': title,
                       'url': r.filenameAsURL(),
                       'use_in_ending': r.use_in_ending,
-                      'duration': timefmt(r.duration/8000)})
+                      'duration': timefmt(r.duration)})
         return s

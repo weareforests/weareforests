@@ -33,15 +33,18 @@
 
     function refreshRecordings (recordings, id)
     {
+        var play = function(url)
+        {
+            $("#audio").attr("src", url).get(0).play();
+        };
         var tb = $("#" + id + " tbody");
         tb.children().remove();
         $(recordings).each(function (i, v) {
                              $("<tr>")
-                                   .append($("<td>").text(v.title))
+                                   .append($("<td>").append($("<a>").attr("href", v.url).text(v.title).click(function(e){e.preventDefault();play(v.url);})))
                                    .append($("<td>").text(v.time))
                                    .append($("<td>").text(v.duration))
                                    .append($("<td>")
-                                           .append($("<button>").text("Hear").click(function(){$("#audio").attr("src", v.url).get(0).play();}))
                                            .append($("<button>").text("Push").click(function(){IO.send({'cmd': 'queue', 'id': v.id});}))
                                            .append($("<button>").text("Del").click(function(){if (confirm('Are you sure you want to delete '+v.title+'?')){IO.send({'cmd': 'deleteRecording', 'id': v.id});}}))
                                            .append($("<input>")

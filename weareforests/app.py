@@ -37,10 +37,11 @@ class Application (application.Application, web.WebMixIn):
     def started(self):
 
         # database handling
-        print self.path("db").path
         self.store = Store(self.path("db").child("storage").path)
-        p = self.path("db").child("audio")
-        if not p.exists(): p.createDirectory()
+
+        # the recordings path
+        self.recordingsPath = self.path("db").child("recordings")
+        if not self.recordingsPath.exists(): self.recordingsPath.createDirectory()
 
         # start AGI service
         f = fastagi.FastAGIFactory(self.connected)
