@@ -202,10 +202,11 @@ class Application (application.Application, web.WebMixIn):
 
     def conferenceLeave(self, admin, e):
         session = self.sessions[e['channel']]
-        print "%s left the conference" % e['channel']
-        if session.state.get[:3] == 'to_':
+        if session.state.get[:3] == 'to_' or session.agi:
+            print "Transfered from conference to AGI:", e['channel']
             return
         # hangup
+        print "%s left the conference" % e['channel']
         del self.sessions[e['channel']]
         self.pingWebSessions()
 
