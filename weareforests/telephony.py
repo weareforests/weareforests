@@ -243,7 +243,8 @@ class CallerSession (object):
         def audioDone(r):
             digit, offset = r
             if digit == self.digit:
-                self.setStateAfterSample("starting", "weareforests-audio/silent")
+                self.app.transferToAGI(self, "to_start")
+                #self.setStateAfterSample("starting", "weareforests-audio/silent")
             else:
                 self.state.set("pending_start", count-1)
         d.addCallback(audioDone)
