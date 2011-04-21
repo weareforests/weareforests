@@ -230,7 +230,7 @@ class CallerSession (object):
         self.app.sessionEnded(self.channel)
 
 
-    def enter_pending_start(self, count=3):
+    def enter_pending_start(self, count=10):
         """
         Press 1 to start
         """
