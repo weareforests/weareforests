@@ -151,7 +151,7 @@ class CallerSession (object):
     def enter_start(self):
         for f in self.app.getInitialQueue():
             self.queueAdd(f)
-        self.state.set("play")
+        reactor.callLater(1.5, self.state.set, "play")
 
 
     def enter_play(self, recording=None, offset=0):
@@ -243,7 +243,7 @@ class CallerSession (object):
         def audioDone(r):
             digit, offset = r
             if digit == self.digit:
-                reactor.callLater(1.5, self.app.transferToAGI, self, "to_start")
+                self.app.transferToAGI(self, "to_start")
             else:
                 self.state.set("pending_start", count-1)
         d.addCallback(audioDone)
