@@ -9,6 +9,6 @@
 # Source code (c) 2011 Arjan Scherpenisse <arjan@scherpenisse.net>
 # This code is released under the MIT license. See LICENSE for details.
 
-from weareforests.app import Application
+from weareforests.app import Application, Options
 
 __version__ = "0.1"

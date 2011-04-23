@@ -14,60 +14,13 @@ from twisted.web import static, resource, server, resource
 from epsilon.extime import Time
 
 from sparked.web.io import listen
+from sparked.web.util import wrapBasicAuthentication, UploadResource
 
 import glob
 import os
-import tempfile
-from email.Parser import Parser
 import shutil
 
 from weareforests import telephony
-
-
-class UploadResource(resource.Resource):
-
-    def __init__(self, app):
-        self.app = app
-
-
-    def render_POST(self, request):
-        referer = "/"
-        body = ""
-        for k, vs in request.requestHeaders.getAllRawHeaders():
-            for v in vs:
-                if k.lower() == "referer":
-                    referer = v
-                body += k + ": " + v + "\r\n"
-        body += "\r\n"
-        body += "".join(request.content.readlines())
-
-        p = Parser()
-        msg = p.parsestr(body)
-        audiopart = None
-        for part in msg.walk():
-            if part.is_multipart():
-                continue
-            if part.get_content_type() in ("audio/mp3", "audio/mpeg"):
-                audiopart = part
-                break
-
-        if not audiopart:
-            request.redirect(referer+"#uploadFailure")
-            return "FAIL"
-
-        print audiopart.get_filename()
-
-        payload = audiopart.get_payload()
-        fp, fn = tempfile.mkstemp()
-        os.write(fp, payload)
-        os.close(fp)
-
-        self.app.fileUploaded(fn, audiopart.get_filename())
-
-        request.redirect(referer+"#uploadOK")
-        return "OK"
-
-
 
 
 
@@ -78,7 +31,9 @@ class WebMixIn:
         root.putChild("", static.File(self.path("data").child("web").child("index.html").path))
         root.putChild("lib", static.File(self.path("data").child("web").child("lib").path))
         root.putChild("recordings", static.File(self.recordingsPath.path))
-        root.putChild("upload", UploadResource(self))
+        root.putChild("upload", UploadResource(self.fileUploaded, lambda rq, rf: "FAIL"))
+        wrapBasicAuthentication(root, "admin", self.appOpts['password'], "We Are Forests - web admin")
+
         site = server.Site(root)
         self.webio = listen(site)
         reactor.listenTCP(8880, site)
@@ -100,7 +55,12 @@ class WebMixIn:
         c.events.addObserver("message", lambda msg: self.handleMessage(msg, c))
 
 
-    def fileUploaded(self, tmpfile, filename):
+    def fileUploaded(self, request, tmpfile, opts):
+        if opts['mime'] not in ("audio/mp3", "audio/mpeg"):
+            request.redirect(opts['referer']+"#uploadFail")
+            return "FAIL"
+
+        filename = opts['filename']
         base = filename[:-4] # strip extension
         filename = base
         f = self.recordingsPath.child(base+".mp3")
@@ -123,6 +83,9 @@ class WebMixIn:
         rec = telephony.Recording(store=self.store, filename=unicode(filename), created=Time(), caller_id=u"web upload", duration=duration, user_recording=False)
 
         self.pingWebRecordings()
+
+        request.redirect(opts['referer']+"#uploadSuccess")
+        return "OK"
 
 
     def handleMessage(self, msg, c):

@@ -32,6 +32,10 @@ EXTEN_AGI = '502'
 EXTEN_CONFERENCE = '503'
 
 
+class Options(application.Options):
+    optParameters = [["password", None, "admin", "Web admin password"]]
+
+
 class Application (application.Application, web.WebMixIn):
 
     useRecordingsInEnding = False
