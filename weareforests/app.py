@@ -66,6 +66,20 @@ class Application (application.Application, web.WebMixIn):
         f.login("127.0.0.1", 5038).addCallback(r)
 
         self.sessions = {}
+        self.recentlyDisconnected = {}
+        t = task.LoopingCall(self.cleanRecentlyDisconnected)
+        t.start(30)
+
+
+    def cleanRecentlyDisconnected(self):
+        now = Time()
+        dirty = False
+        for callerId, t in self.recentlyDisconnected.items():
+            if (now-t).seconds > 300:
+                del self.recentlyDisconnected[callerId]
+                dirty = True
+        if dirty:
+            self.pingWebSessions()
 
 
     def enter_start(self):
@@ -89,36 +103,41 @@ class Application (application.Application, web.WebMixIn):
 
     def connected(self, agi):
         channel = agi.variables['agi_channel']
+        if agi.variables['agi_callerid'] in self.recentlyDisconnected:
+            isReconnect = True
+            del self.recentlyDisconnected[agi.variables['agi_callerid']]
+        else:
+            isReconnect = False
+
         if channel not in self.sessions:
             # new session
-            session = telephony.CallerSession(self, agi)
+            session = telephony.CallerSession(self, agi, isReconnect)
             self.webio.sendAll({'event': 'message', 'title': 'New caller', 'text': 'Caller id: %s' % session.callerId})
             self.sessions[session.channel] = session
         else:
             # re-entry from conference
-            self.sessions[channel].reEntry(agi)
+            self.sessions[channel].reEntry(agi, isReconnect)
+            session = self.sessions[channel]
         self.pingWebSessions()
 
 
     def sessionEnded(self, channel):
         print 'session ended', channel
         self.webio.sendAll({'event': 'message', 'title': 'Caller disconnected', 'text': 'Caller id: %s' % self.sessions[channel].callerId})
+        self.recentlyDisconnected[self.sessions[channel].callerId] = Time()
         del self.sessions[channel]
         self.pingWebSessions()
 
 
     def getInitialQueue(self):
         timePoint = Time() - timedelta(minutes=15)
-        print 11
         try:
             q = [r.filenameAsAsterisk() for r in self.store.query(Recording, AND(Recording.created >= timePoint, Recording.use_in_ending == False), sort=Recording.created.ascending)]
         except:
             log.err()
-        print 2
         intro = self.getRecordingByName("intro")
         if intro:
             q.insert(0, intro.filenameAsAsterisk())
-        print q
         return q
 
 
@@ -208,8 +227,7 @@ class Application (application.Application, web.WebMixIn):
             return
         # hangup
         print "%s left the conference" % e['channel']
-        del self.sessions[e['channel']]
-        self.pingWebSessions()
+        self.sessionEnded(e['channel'])
 
 
     def conferenceDTMF(self, admin, e):

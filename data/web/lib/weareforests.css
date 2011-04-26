@@ -38,3 +38,7 @@ h2 {
     padding-top: 2em;
     font-size: 150%;
  }
+
+#sessions tr.disconnected td {
+    color: #aaa;
+}

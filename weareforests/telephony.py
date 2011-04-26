@@ -79,6 +79,7 @@ class CallerSession (object):
     app = None
     agi = None
     queue = None
+    isReconnect = False
 
     # info
     channel = None
@@ -93,14 +94,15 @@ class CallerSession (object):
     state = None
 
 
-    def __init__(self, app, agi):
+    def __init__(self, app, agi, isReconnect):
         self.app = app
         self.agi = agi
+        self.isReconnect = self.isReconnect or isReconnect
         self.queue = PriorityQueue()
         print self.agi.variables
         self.callerId = unicode(self.agi.variables['agi_callerid'])
         self.channel = self.agi.variables['agi_channel']
-        self.timeStarted = time.time()
+        self.timeStarted = Time()
         print "New session from", self.callerId
         self.state = application.StateMachine(self, verbose=1)
 
@@ -111,8 +113,9 @@ class CallerSession (object):
             self.state.set("start")
 
 
-    def reEntry(self, agi):
+    def reEntry(self, agi, isReconnect):
         self.agi = agi
+        self.isReconnect = self.isReconnect or isReconnect
         if self.state.get == 'to_recording':
             self.setStateAfterSample("recording", "weareforests-audio/record")
         if self.state.get == 'to_play':
@@ -149,6 +152,10 @@ class CallerSession (object):
 
 
     def enter_start(self):
+        if self.isReconnect:
+            self.agi.finish()
+            self.app.transferToConference(self)
+            return
         for f in self.app.getInitialQueue():
             self.queueAdd(f)
         self.state.set("play")
@@ -165,6 +172,7 @@ class CallerSession (object):
         if not recording:
             if self.queue.isEmpty():
                 # if no recording, transfer to conference
+                self.agi.finish()
                 self.app.transferToConference(self)
             else:
                 current = self.queue.pop()

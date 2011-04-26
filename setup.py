@@ -9,13 +9,12 @@ WeAreForests installation script
 from setuptools import setup
 import os
 import sys
-import weareforests
 from twisted.python import procutils
 
 
 setup(
     name = "WeAreForests",
-    version = weareforests.__version__,
+    version = "0.3",
     author = "Arjan Scherpenisse",
     author_email = "arjan@scherpenisse.net",
     url = "http://scherpenisse.net/weareforests",

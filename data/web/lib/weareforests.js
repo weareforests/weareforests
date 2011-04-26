@@ -5,28 +5,32 @@
         var tb = $("#sessions tbody");
         tb.children().remove();
         $(sessions).each(function (i, v) {
-                             var liveEl;
-                             if (v.state == 'conference' || !v.isLive)
+                             var opts = $("<span>");
+                             if (v.state == 'disconnected')
                              {
-                                 liveEl = $("<span>")
-                                     .append($("<button>").text("Hangup").click(function(){IO.send({'cmd': 'hangup', 'channel': v.channel});}))
-                                     .append($("<input>")
-                                             .attr("type", "checkbox")
-                                             .attr("checked", v.isLive ? "checked": "")
-                                             .click(function() { 
-                                                        IO.send({'cmd': 'toggleLive', 'channel': v.channel});
-                                                    }))
-                                     .append("can speak");
+                                 opts.append($("<button>").text("Dial again").click(function(){IO.send({'cmd': 'dial', 'callerId': v.callerId});}));
+                                 opts.append($("<button>").text("Forget").click(function(){IO.send({'cmd': 'forget', 'callerId': v.callerId});}));
                              }
                              else
                              {
-                                 liveEl = '&nbsp;';
+                                 opts.append($("<button>").text("Hangup").click(function(){IO.send({'cmd': 'hangup', 'channel': v.channel});}));
+                                 if (v.state == 'conference' || !v.isLive)
+                                 {
+                                     opts.append($("<input>")
+                                                 .attr("type", "checkbox")
+                                                 .attr("checked", v.isLive ? "checked": "")
+                                                 .click(function() { 
+                                                            IO.send({'cmd': 'toggleLive', 'channel': v.channel});
+                                                        }))
+                                         .append("can speak");
+                                 }
                              }
                              $("<tr>")
+                                 .addClass(v.state)
                                  .append($("<td>").text(v.callerId))
                                  .append($("<td>").text(v.timeStarted))
                                  .append($("<td>").text(v.state + ((v.state == "play" || v.state == "ending") ? " (" + (v.queue.length+1) + ")" : "")))
-                                 .append($("<td>").append(liveEl))
+                                 .append($("<td>").append(opts))
                                  .appendTo(tb);
                          });
     }

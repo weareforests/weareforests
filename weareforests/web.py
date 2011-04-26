@@ -126,6 +126,15 @@ class WebMixIn:
             if msg['cmd'] == 'hangup':
                 self.admin.hangup(msg['channel'])
 
+            if msg['cmd'] == 'dial':
+                self.placeCalls([msg['callerId']])
+                return
+
+            if msg['cmd'] == 'forget':
+                del self.recentlyDisconnected[msg['callerId']]
+                self.pingWebSessions()
+                return
+
             if msg['cmd'] == 'deleteRecording':
                 r = self.store.getItemByID(int(msg['id']))
                 path = r.filenameAsPath(self)
@@ -172,10 +181,16 @@ class WebMixIn:
         for session in self.sessions.values():
             s.append({'callerId': session.callerId,
                       'state': session.state.get,
-                      'timeStarted': Time.fromPOSIXTimestamp(session.timeStarted).asHumanly(),
+                      'timeStarted': session.timeStarted.asHumanly(),
                       'channel': session.channel,
                       'isLive': session.isLivePhone,
                       'queue': list(session.queue)})
+
+        for callerId, t in self.recentlyDisconnected.iteritems():
+            s.append({'callerId': callerId,
+                      'state': 'disconnected',
+                      'timeStarted': t.asHumanly(),
+                      'channel': '', 'isLive': False, 'queue': []})
         return s
 
 
