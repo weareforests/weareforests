@@ -174,6 +174,7 @@ class CallerSession (object):
                 # if no recording, transfer to conference
                 self.agi.finish()
                 self.app.transferToConference(self)
+                current = "weareforests-audio/silent"
             else:
                 current = self.queue.pop()
         else:
