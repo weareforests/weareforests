@@ -40,9 +40,22 @@ Asterisk permissions:
 Running in system mode
 ----------------------
 
-Use the /usr/share/sparked/sparked-init script:
+Put the following script in /etc/init.d/weareforests:
 
-    sudo ln -s /usr/share/sparked/sparked-init /etc/init.d/weareforests
+    #!/bin/sh
+    ### BEGIN INIT INFO
+    # Provides:          weareforests
+    # Required-Start:    $all
+    # Required-Stop:     $all
+    # Default-Start:     2 3 4 5
+    # Default-Stop:      0 1 6
+    # Short-Description: Starts a service for the Sparked plugin 'weareforests'
+    # Description:       Generic plugin starter for sparkd plugins
+    ### END INIT INFO
+    # Author: Arjan Scherpenisse <arjan@scherpenisse.net>
+    
+    APPLICATION="weareforests"
+    . /usr/lib/sparked/sparked-init
 
 Asterisk permissions:
 

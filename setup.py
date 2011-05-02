@@ -14,7 +14,7 @@ from twisted.python import procutils
 
 setup(
     name = "WeAreForests",
-    version = "0.4",
+    version = "0.5",
     author = "Arjan Scherpenisse",
     author_email = "arjan@scherpenisse.net",
     url = "http://scherpenisse.net/weareforests",

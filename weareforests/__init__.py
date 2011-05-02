@@ -11,4 +11,4 @@
 
 from weareforests.app import Application, Options
 
-__version__ = "0.4"
+__version__ = "0.5"
