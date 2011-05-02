@@ -252,7 +252,8 @@ class CallerSession (object):
         def audioDone(r):
             digit, offset = r
             if digit == self.digit:
-                reactor.callLater(1.2, self.app.transferToAGI, self, "to_start")
-            self.state.set("pending_start", count-1)
+                self.setStateAfterSample("start", "weareforests-audio/shortsilence")
+            else:
+                self.state.set("pending_start", count-1)
         d.addCallback(audioDone)
         d.addErrback(self.catchHangup)
