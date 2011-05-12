@@ -212,6 +212,7 @@ class CallerSession (object):
 
             if duration < 800:
                 print "Recording too short:", duration
+                self.setStateAfterSample("play", "weareforests-audio/listen", currentlyPlaying, offset)
                 return
 
             duration = duration / 8000

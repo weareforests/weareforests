@@ -13,14 +13,14 @@
                              }
                              else
                              {
-                                 opts.append($("<button>").text("Hangup").click(function(){IO.send({'cmd': 'hangup', 'channel': v.channel});}));
+                                 opts.append($("<button>").text("Hangup").click(function(){IO.send({'cmd': 'hangup', 'uniqueid': v.uniqueid});}));
                                  if (v.state == 'conference' || !v.isLive)
                                  {
                                      opts.append($("<input>")
                                                  .attr("type", "checkbox")
                                                  .attr("checked", v.isLive ? "checked": "")
                                                  .click(function() { 
-                                                            IO.send({'cmd': 'toggleLive', 'channel': v.channel});
+                                                            IO.send({'cmd': 'toggleLive', 'uniqueid': v.uniqueid});
                                                         }))
                                          .append("can speak");
                                  }
