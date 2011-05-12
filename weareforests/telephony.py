@@ -205,12 +205,18 @@ class CallerSession (object):
 
         def save(r):
             digit, tpe, duration = r
-            duration = duration / 8000
-            rec = Recording(store=self.app.store, filename=unicode(filename), created=start, caller_id=self.callerId, duration=duration, user_recording=True)
-            print "saved!"
+
             if tpe == 'hangup':
                 print "user hung up during recording."
                 self.app.sessionEnded(self)
+
+            if duration < 800:
+                print "Recording too short:", duration
+                return
+
+            duration = duration / 8000
+            rec = Recording(store=self.app.store, filename=unicode(filename), created=start, caller_id=self.callerId, duration=duration, user_recording=True)
+            print "saved!"
 
             # add it to everybody's queue
             self.app.recordingAdded(self, rec)
