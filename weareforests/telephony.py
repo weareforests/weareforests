@@ -84,6 +84,7 @@ class CallerSession (object):
     # info
     channel = None
     callerId = None
+    uniqueid = None
     timeStarted = None
 
     # conference user id
@@ -99,8 +100,8 @@ class CallerSession (object):
         self.agi = agi
         self.isReconnect = self.isReconnect or isReconnect
         self.queue = PriorityQueue()
-        print self.agi.variables
         self.callerId = unicode(self.agi.variables['agi_callerid'])
+        self.uniqueid = self.agi.variables['agi_uniqueid']
         self.channel = self.agi.variables['agi_channel']
         self.timeStarted = Time()
         print "New session from", self.callerId
@@ -209,12 +210,14 @@ class CallerSession (object):
             print "saved!"
             if tpe == 'hangup':
                 print "user hung up during recording."
-                self.app.sessionEnded(self.channel)
+                self.app.sessionEnded(self)
 
             # add it to everybody's queue
             self.app.recordingAdded(self, rec)
-            # resume play where we stopped
-            self.setStateAfterSample("play", "weareforests-audio/listen", currentlyPlaying, offset)
+
+            if tpe != 'hangup':
+                # resume play where we stopped
+                self.setStateAfterSample("play", "weareforests-audio/listen", currentlyPlaying, offset)
 
         d.addCallback(save)
         d.addErrback(self.catchHangup)
@@ -236,7 +239,7 @@ class CallerSession (object):
             return
 
         print "***", f
-        self.app.sessionEnded(self.channel)
+        self.app.sessionEnded(self)
 
 
     def enter_pending_start(self, count=10):
@@ -246,7 +249,7 @@ class CallerSession (object):
         self.app.pingWebSessions()
 
         if count == 0:
-            self.app.admin.hangup(self.channel)
+            self.getVariable("CHANNEL").addCallback(lambda c: self.app.admin.hangup(c))
 
         d = self.agi.streamFile("weareforests-audio/welcome", chr(self.digit))
         def audioDone(r):

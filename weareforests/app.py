@@ -85,8 +85,7 @@ class Application (application.Application, web.WebMixIn):
     def enter_start(self):
         self.state.set("normal")
         for session in self.sessions.values():
-            session.state.set("to_start")
-            self.redirect(session, EXTEN_AGI)
+            self.transferToAGI(session, "to_start")
 
 
     def enter_normal(self):
@@ -97,35 +96,37 @@ class Application (application.Application, web.WebMixIn):
         self.webio.sendAll({'event': "state-change", 'state': 'ending'})
         # transfer all sessions to the ending AGI
         for session in self.sessions.values():
-            session.state.set("to_ending")
-            self.redirect(session, EXTEN_AGI)
+            self.transferToAGI(session, "to_ending")
 
 
     def connected(self, agi):
-        channel = agi.variables['agi_channel']
+        uniqueid = agi.variables['agi_uniqueid']
         if agi.variables['agi_callerid'] in self.recentlyDisconnected:
             isReconnect = True
             del self.recentlyDisconnected[agi.variables['agi_callerid']]
         else:
             isReconnect = False
 
-        if channel not in self.sessions:
+        if uniqueid not in self.sessions:
             # new session
+            print "New session: %s (caller: %s)" % (uniqueid, agi.variables['agi_callerid'])
             session = telephony.CallerSession(self, agi, isReconnect)
             self.webio.sendAll({'event': 'message', 'title': 'New caller', 'text': 'Caller id: %s' % session.callerId})
-            self.sessions[session.channel] = session
+            self.sessions[session.uniqueid] = session
         else:
             # re-entry from conference
-            self.sessions[channel].reEntry(agi, isReconnect)
-            session = self.sessions[channel]
+            print "Re-entry from %s (caller: %s)" % (uniqueid, agi.variables['agi_callerid'])
+            self.sessions[uniqueid].reEntry(agi, isReconnect)
+            session = self.sessions[uniqueid]
         self.pingWebSessions()
 
 
-    def sessionEnded(self, channel):
-        print 'session ended', channel
-        self.webio.sendAll({'event': 'message', 'title': 'Caller disconnected', 'text': 'Caller id: %s' % self.sessions[channel].callerId})
-        self.recentlyDisconnected[self.sessions[channel].callerId] = Time()
-        del self.sessions[channel]
+    def sessionEnded(self, session):
+        print 'session ended', session.uniqueid
+        self.webio.sendAll({'event': 'message', 'title': 'Caller disconnected', 'text': 'Caller id: %s' % session.callerId})
+        uniqueid = session.uniqueid
+        self.recentlyDisconnected[self.sessions[uniqueid].callerId] = Time()
+        del self.sessions[uniqueid]
         self.pingWebSessions()
 
 
@@ -183,33 +184,34 @@ class Application (application.Application, web.WebMixIn):
         self.pingWebSessions()
 
 
-    def redirect(self, session, exten):
-        d = self.admin.redirect(session.channel, 'default', exten, '1')
-        def logAndDisconnect(f):
-            print "*** TRANSFER FAILURE"
-            self.sessionEnded(session.channel)
-            log.err(f)
-        d.addErrback(logAndDisconnect)
-        d.addCallback(lambda _: self.pingWebSessions())
-
-
     def transferToConference(self, session):
         session.state.set("to_conference")
-        self.redirect(session, EXTEN_CONFERENCE)
+        d.addCallback(lambda chan: self.admin.redirect(chan, 'default', EXTEN_CONFERENCE, '1'))
+        d.addErrback(self.logAndDisconnect, session)
+        d.addCallback(lambda _: self.pingWebSessions())
 
 
     def transferToAGI(self, session, state):
         session.state.set(state)
-        self.redirect(session, EXTEN_AGI)
+        d = self.admin.redirect(session.channel, 'default', EXTEN_AGI, '1')
+        d.addErrback(self.logAndDisconnect, session)
+        d.addCallback(lambda _: self.pingWebSessions())
+
+
+    def logAndDisconnect(self, f, session):
+        print "*** TRANSFER FAILURE"
+        log.err(f)
+        self.sessionEnded(session)
 
 
     def conferenceJoin(self, admin, e):
-        channel = e['channel']
-        if channel not in self.sessions:
+        uniqueid = e['uniqueid']
+        if uniqueid not in self.sessions:
             print "???", e
             return
-        print "%s joined the conference" % channel
-        session = self.sessions[channel]
+        print "%s joined the conference" % uniqueid
+        session = self.sessions[uniqueid]
+        session.channel = e['channel']
         session.state.set("conference")
         session.conferenceUserId = e['member']
 
@@ -221,18 +223,18 @@ class Application (application.Application, web.WebMixIn):
 
 
     def conferenceLeave(self, admin, e):
-        session = self.sessions[e['channel']]
+        session = self.sessions[e['uniqueid']]
         if session.state.get != "conference":
-            print "Transfered from conference to AGI:", e['channel']
+            print "Transfered from conference to AGI:", e['uniqueid']
             return
         # hangup
-        print "%s left the conference" % e['channel']
-        self.sessionEnded(e['channel'])
+        print "%s left the conference" % e['uniqueid']
+        self.sessionEnded(session)
 
 
     def conferenceDTMF(self, admin, e):
         print "DTMF", e
-        session = self.sessions[e['channel']]
+        session = self.sessions[e['uniqueid']]
         if e['key'] == '1':
             # trigger recording from conference
             self.transferToAGI(session, 'to_recording')

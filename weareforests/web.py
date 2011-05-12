@@ -91,7 +91,7 @@ class WebMixIn:
     def handleMessage(self, msg, c):
         if 'cmd' in msg:
             if msg['cmd'] == 'toggleLive':
-                session = self.sessions[msg['channel']]
+                session = self.sessions[msg['uniqueid']]
                 session.isLivePhone = not session.isLivePhone
                 if session.isLivePhone and session.state.get != "conference":
                     self.transferToConference(session)
@@ -124,7 +124,7 @@ class WebMixIn:
                 self.placeCalls(nrs)
 
             if msg['cmd'] == 'hangup':
-                self.admin.hangup(msg['channel'])
+                self.admin.hangup(msg['uniqueid'])
 
             if msg['cmd'] == 'dial':
                 self.placeCalls([msg['callerId']])
@@ -182,6 +182,7 @@ class WebMixIn:
             s.append({'callerId': session.callerId,
                       'state': session.state.get,
                       'timeStarted': session.timeStarted.asHumanly(),
+                      'uniqueid': session.uniqueid,
                       'channel': session.channel,
                       'isLive': session.isLivePhone,
                       'queue': list(session.queue)})
@@ -190,7 +191,7 @@ class WebMixIn:
             s.append({'callerId': callerId,
                       'state': 'disconnected',
                       'timeStarted': t.asHumanly(),
-                      'channel': '', 'isLive': False, 'queue': []})
+                      'channel': '', 'uniqueid': '', 'isLive': False, 'queue': []})
         return s
 
 
