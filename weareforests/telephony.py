@@ -256,7 +256,7 @@ class CallerSession (object):
         self.app.pingWebSessions()
 
         if count == 0:
-            self.getVariable("CHANNEL").addCallback(lambda c: self.app.admin.hangup(c))
+            self.agi.getVariable("CHANNEL").addCallback(lambda c: self.app.admin.hangup(c))
 
         d = self.agi.streamFile("weareforests-audio/welcome", chr(self.digit))
         def audioDone(r):
