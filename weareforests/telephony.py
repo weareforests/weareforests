@@ -154,7 +154,6 @@ class CallerSession (object):
 
     def enter_start(self):
         if self.isReconnect:
-            self.agi.finish()
             self.app.transferToConference(self)
             return
         for f in self.app.getInitialQueue():
@@ -173,7 +172,6 @@ class CallerSession (object):
         if not recording:
             if self.queue.isEmpty():
                 # if no recording, transfer to conference
-                self.agi.finish()
                 self.app.transferToConference(self)
                 current = "weareforests-audio/silent"
             else:

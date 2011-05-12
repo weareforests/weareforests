@@ -187,7 +187,10 @@ class Application (application.Application, web.WebMixIn):
     def transferToConference(self, session):
         session.state.set("to_conference")
         d = session.agi.getVariable("CHANNEL")
-        d.addCallback(lambda chan: self.admin.redirect(chan, 'default', EXTEN_CONFERENCE, '1'))
+        def redir(chan):
+            session.agi.finish()
+            self.admin.redirect(chan, 'default', EXTEN_CONFERENCE, '1')
+        d.addCallback(redir)
         d.addErrback(self.logAndDisconnect, session)
         d.addCallback(lambda _: self.pingWebSessions())
 
