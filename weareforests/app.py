@@ -189,9 +189,11 @@ class Application (application.Application, web.WebMixIn):
         channel = ""
         session.state.set("to_conference")
         d = session.agi.getVariable("CHANNEL")
-        def finish(chan):
+        def getchan(chan):
+            print "got channel", chan
             channel = chan
             session.agi.finish()
+        d.addCallback(getchan)
         d.addErrback(lambda f: f.trap(ConnectionDone))
         d.addCallback(lambda _: self.admin.redirect(channel, 'default', EXTEN_CONFERENCE, '1'))
         d.addErrback(self.logAndDisconnect, session)
