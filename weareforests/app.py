@@ -12,6 +12,7 @@
 import os
 
 from twisted.internet import reactor, defer, task
+from twisted.internet.error import ConnectionDone
 from twisted.python import log
 from epsilon.extime import Time
 from datetime import timedelta
@@ -185,11 +186,14 @@ class Application (application.Application, web.WebMixIn):
 
 
     def transferToConference(self, session):
+        channel = ""
         session.state.set("to_conference")
         d = session.agi.getVariable("CHANNEL")
-        def redir(chan):
+        def finish(chan):
+            channel = chan
             session.agi.finish()
-            self.admin.redirect(chan, 'default', EXTEN_CONFERENCE, '1')
+        d.addErrback(lambda f: f.trap(ConnectionDone))
+        d.addCallback(lambda _: self.admin.redirect(channel, 'default', EXTEN_CONFERENCE, '1'))
         d.addCallback(redir)
         d.addErrback(self.logAndDisconnect, session)
         d.addCallback(lambda _: self.pingWebSessions())
