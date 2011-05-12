@@ -124,7 +124,7 @@ class WebMixIn:
                 self.placeCalls(nrs)
 
             if msg['cmd'] == 'hangup':
-                self.admin.hangup(msg['uniqueid'])
+                self.admin.hangup(self.sessions[msg['uniqueid']].channel)
 
             if msg['cmd'] == 'dial':
                 self.placeCalls([msg['callerId']])
