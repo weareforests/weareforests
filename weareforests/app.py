@@ -194,7 +194,6 @@ class Application (application.Application, web.WebMixIn):
             session.agi.finish()
         d.addErrback(lambda f: f.trap(ConnectionDone))
         d.addCallback(lambda _: self.admin.redirect(channel, 'default', EXTEN_CONFERENCE, '1'))
-        d.addCallback(redir)
         d.addErrback(self.logAndDisconnect, session)
         d.addCallback(lambda _: self.pingWebSessions())
 
